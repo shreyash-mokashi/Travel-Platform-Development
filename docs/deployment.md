@@ -98,16 +98,19 @@ This becomes `MONGODB_URI`.
 
 ## 3. API on Render
 
-1. Use **Blueprints**, not "New Web Service".
+1. Use **New → Web Service**, and fill it in from
+   [Manual Render settings](#manual-render-settings) below.
 
-   In the Render dashboard the two flows are different. **New → Web Service**
-   ignores `render.yaml` entirely and autofills its own guesses — typically
-   `yarn start` and a root `pnpm run build`, neither of which is right for this
-   repository. Go to **Blueprints → New Blueprint Instance** and select the
-   repo; only that flow reads `render.yaml`.
+   Render has a Blueprint flow that reads `render.yaml` and fills the form for
+   you, but **it requires a payment method on file even for free services**.
+   The manual form needs no card and produces an identical service, so it is
+   the documented path here. `render.yaml` is kept in the repository as the
+   source of truth for those settings — if you change one, change the other.
 
-   If you would rather fill the Web Service form by hand, see
-   [Manual Render settings](#manual-render-settings) at the end of this file.
+   Note that the form autofills its own guesses, typically `yarn start` and a
+   root `pnpm run build`. Both are wrong for this repository: there is no yarn
+   and no root start script, and the root build compiles the frontend too.
+   Replace both.
 
 2. It will prompt for the four `sync: false` values:
 
@@ -264,8 +267,8 @@ I cannot create accounts or approve billing. The remaining steps:
 
 ## Manual Render settings
 
-Only needed if you create a **Web Service** by hand instead of using a
-Blueprint. These values mirror `render.yaml`; if you change one, change both.
+This is the recommended path, because Blueprints require a card on file.
+These values mirror `render.yaml`; if you change one, change both.
 
 | Field                              | Value                  |
 | ---------------------------------- | ---------------------- |
@@ -313,3 +316,8 @@ LOG_LEVEL=info
 `JWT_REFRESH_SECRET`, `CORS_ORIGINS`.
 
 Render injects `PORT` itself; do not set it.
+
+**Quicker:** the Environment Variables panel has an **Add from .env** button.
+Paste one block covering every variable above rather than adding them one at a
+time. Add them before the first deploy — the API validates its configuration at
+boot and exits on anything missing.
