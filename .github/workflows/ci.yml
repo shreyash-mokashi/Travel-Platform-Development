@@ -158,8 +158,18 @@ jobs:
           pnpm --filter @voyago/api build
           pnpm --filter @voyago/web build
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+      # Split from the browser download so a failure names which half broke.
+      # The runner image already ships most Chromium libraries, so a failure
+      # here is a warning: if a library really is missing, the browser install
+      # or the tests below fail loudly anyway.
+      - name: Install Playwright system dependencies
+        continue-on-error: true
+        run: |
+          pnpm exec playwright install-deps chromium ||
+            echo "::warning::playwright install-deps failed; relying on the runner image libraries"
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install chromium
 
       # Both servers are started detached with their output captured, so a
       # startup failure shows the actual reason instead of a bare timeout.
