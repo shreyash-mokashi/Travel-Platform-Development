@@ -98,7 +98,17 @@ This becomes `MONGODB_URI`.
 
 ## 3. API on Render
 
-1. New → **Blueprint**, point it at this repository. Render reads `render.yaml`.
+1. Use **Blueprints**, not "New Web Service".
+
+   In the Render dashboard the two flows are different. **New → Web Service**
+   ignores `render.yaml` entirely and autofills its own guesses — typically
+   `yarn start` and a root `pnpm run build`, neither of which is right for this
+   repository. Go to **Blueprints → New Blueprint Instance** and select the
+   repo; only that flow reads `render.yaml`.
+
+   If you would rather fill the Web Service form by hand, see
+   [Manual Render settings](#manual-render-settings) at the end of this file.
+
 2. It will prompt for the four `sync: false` values:
 
    | Variable             | Value                                             |
@@ -249,3 +259,57 @@ I cannot create accounts or approve billing. The remaining steps:
 | Database suspends too aggressively                | Neon Launch plan                                                     | ~USD 19/month                       |
 | Vercel Hobby's non-commercial terms no longer fit | Vercel Pro                                                           | ~USD 20/month                       |
 | You want everything always-on and cheap           | One Oracle Cloud Always Free ARM VM running the Docker Compose stack | Free, but you manage the VM and TLS |
+
+---
+
+## Manual Render settings
+
+Only needed if you create a **Web Service** by hand instead of using a
+Blueprint. These values mirror `render.yaml`; if you change one, change both.
+
+| Field                              | Value                  |
+| ---------------------------------- | ---------------------- |
+| Language                           | Node                   |
+| Branch                             | `main`                 |
+| **Root Directory**                 | **leave empty**        |
+| Instance type                      | Free                   |
+| Health Check Path (under Advanced) | `/api/v1/health/ready` |
+
+**Root Directory must stay empty.** The build runs pnpm workspace commands that
+need the repository root; pointing it at `apps/api` breaks the workspace.
+
+**Build Command**
+
+```
+corepack enable && pnpm install --frozen-lockfile && pnpm --filter @voyago/shared build && pnpm --filter @voyago/api exec prisma generate && pnpm --filter @voyago/api build
+```
+
+**Start Command**
+
+```
+pnpm --filter @voyago/api exec prisma migrate deploy && pnpm --filter @voyago/api start
+```
+
+Replace the autofilled `yarn start` — this repository does not use yarn, and
+there is no start script at the root.
+
+**Environment variables with fixed values**
+
+```
+NODE_ENV=production
+NODE_VERSION=20.19.0
+COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+JWT_ACCESS_TTL=900s
+JWT_REFRESH_TTL=7d
+THROTTLE_TTL_SECONDS=60
+THROTTLE_LIMIT=120
+AUTH_THROTTLE_LIMIT=10
+LOG_LEVEL=info
+```
+
+**Secrets you supply**
+
+`DATABASE_URL`, `DIRECT_URL`, `MONGODB_URI`, `JWT_ACCESS_SECRET`,
+`JWT_REFRESH_SECRET`, `CORS_ORIGINS`.
+
+Render injects `PORT` itself; do not set it.

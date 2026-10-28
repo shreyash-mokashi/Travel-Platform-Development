@@ -41,6 +41,10 @@ services:
       # Render injects PORT and the application binds to it.
       - key: NODE_VERSION
         value: 20.19.0
+      # corepack otherwise prompts before downloading pnpm, which hangs or
+      # fails on a non-interactive build machine.
+      - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
+        value: '0'
 
       # --- Secrets: entered in the Render dashboard, never committed ---
       - key: DATABASE_URL
