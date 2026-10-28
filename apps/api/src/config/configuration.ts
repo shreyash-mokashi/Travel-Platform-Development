@@ -21,7 +21,8 @@ export function buildAppConfig(env: EnvironmentVariables): AppConfig {
   return {
     nodeEnv: env.NODE_ENV,
     isProduction: env.NODE_ENV === 'production',
-    port: env.API_PORT,
+    // PORT is injected by the hosting platform; API_PORT is the local default.
+    port: Number(process.env.PORT) || env.API_PORT,
     databaseUrl: env.DATABASE_URL,
     mongodbUri: env.MONGODB_URI,
     jwt: {

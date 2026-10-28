@@ -11,6 +11,10 @@ import { getCurrentUser, loginPathFor } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
+// Free hosting suspends an idle API, so the first render after a quiet period
+// waits while it wakes. Vercel's default function limit is well under that.
+export const maxDuration = 60;
+
 export const metadata: Metadata = { title: 'My bookings' };
 
 export default async function BookingsPage({

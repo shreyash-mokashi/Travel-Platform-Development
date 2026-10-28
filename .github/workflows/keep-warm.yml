@@ -1,0 +1,41 @@
+# Optional: pings the deployed API so Render's free tier does not suspend it.
+#
+# Render free web services sleep after about 15 minutes of inactivity, and the
+# next visitor then waits roughly 50 seconds for a cold start. A periodic
+# health check keeps the demo responsive.
+#
+# To enable: set the repository variable API_HEALTH_URL to
+# https://<your-render-service>.onrender.com/api/v1/health
+# The workflow is a no-op until that variable exists.
+#
+# GitHub disables scheduled workflows on repositories with no activity for 60
+# days; re-enable it from the Actions tab if that happens.
+
+name: Keep demo API warm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the API health endpoint
+        env:
+          API_HEALTH_URL: ${{ vars.API_HEALTH_URL }}
+        run: |
+          if [ -z "$API_HEALTH_URL" ]; then
+            echo "API_HEALTH_URL is not set; nothing to ping."
+            exit 0
+          fi
+          # A cold start can take close to a minute, so allow for it and retry.
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$API_HEALTH_URL" || echo 000)
+            echo "Attempt $attempt: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "API did not respond with 200 after 3 attempts."
+          exit 1

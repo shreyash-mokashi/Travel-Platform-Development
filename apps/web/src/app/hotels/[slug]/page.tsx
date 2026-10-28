@@ -21,6 +21,10 @@ import { parseSearchParams, stayQuery, type RawSearchParams } from '@/lib/search
 
 export const dynamic = 'force-dynamic';
 
+// Free hosting suspends an idle API, so the first render after a quiet period
+// waits while it wakes. Vercel's default function limit is well under that.
+export const maxDuration = 60;
+
 interface PageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<RawSearchParams>;

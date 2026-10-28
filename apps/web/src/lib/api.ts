@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { API_INTERNAL_URL, ACCESS_TOKEN_COOKIE } from './config';
+import { API_INTERNAL_URL, API_TIMEOUT_MS, ACCESS_TOKEN_COOKIE } from './config';
 import { ApiError } from './api-error';
 
 export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
@@ -27,16 +27,33 @@ export async function apiFetch<T>(path: string, options: ApiRequestOptions = {})
     if (token) requestHeaders.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_INTERNAL_URL}${path}`, {
-    ...rest,
-    headers: requestHeaders,
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    ...(revalidate === undefined
-      ? { cache: 'no-store' as const }
-      : revalidate === false
+  let response: Response;
+  try {
+    response = await fetch(`${API_INTERNAL_URL}${path}`, {
+      ...rest,
+      headers: requestHeaders,
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(revalidate === undefined
         ? { cache: 'no-store' as const }
-        : { next: { revalidate } }),
-  });
+        : revalidate === false
+          ? { cache: 'no-store' as const }
+          : { next: { revalidate } }),
+    });
+  } catch {
+    // A timeout or refused connection almost always means the API is asleep or
+    // restarting, which is normal on a free hosting tier. Say so plainly
+    // instead of surfacing a generic network error.
+    throw new ApiError(
+      503,
+      {
+        message:
+          'The booking service is waking up. This can take up to a minute on the free ' +
+          'demo hosting - please try again in a moment.',
+      },
+      'The booking service is unavailable.',
+    );
+  }
 
   if (response.status === 204) return undefined as T;
 

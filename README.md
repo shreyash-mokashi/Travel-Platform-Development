@@ -343,6 +343,22 @@ Two environment settings matter when running the suites:
 
 ---
 
+## Deployment
+
+Voyago is configured to deploy **entirely on free tiers**: Vercel for the frontend, Render for
+the API, Neon for PostgreSQL and MongoDB Atlas for content. `render.yaml` and
+`apps/web/vercel.json` are in the repository; no secret is committed.
+
+The one compromise is that Render's free tier suspends an idle service, so the first request
+after a quiet period waits while it wakes. Three things soften that: the API client shows a
+"the service is waking up" message instead of an error, data-fetching pages allow a 60-second
+render, and `.github/workflows/keep-warm.yml` pings the API every 10 minutes once you set the
+`API_HEALTH_URL` repository variable.
+
+**It has not been deployed** — that needs accounts and credentials I do not have. The full
+walkthrough, including what is left for you to do, is in
+[docs/deployment.md](docs/deployment.md).
+
 ## Known limitations
 
 These are deliberate scope boundaries for a demonstration project, not defects:
@@ -363,5 +379,8 @@ These are deliberate scope boundaries for a demonstration project, not defects:
   dynamic route, so the status line is flushed before `notFound()` is reached. The user sees
   the correct page; only the HTTP status is wrong. Fixing it properly would mean validating
   every slug in middleware, adding an API round-trip to every page load for a cosmetic gain.
+- **A free-tier API sleeps when idle.** Expect roughly a 50-second wait on the first visit
+  after a quiet period unless the keep-warm workflow is enabled. This is a hosting-plan
+  trade-off, not an application defect.
 - **Not production-ready.** The demo works end to end and is tested, but it has not been
   through load testing, a penetration test, or an accessibility audit.

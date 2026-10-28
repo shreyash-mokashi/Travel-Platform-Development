@@ -14,7 +14,9 @@ async function bootstrap(): Promise<void> {
   const config = app.get(ConfigService);
 
   const isProduction = config.get<string>('NODE_ENV') === 'production';
-  const port = config.get<number>('API_PORT', 4000);
+  // Render, Railway and most PaaS hosts inject PORT and expect the process to
+  // bind to it. API_PORT stays as the local default.
+  const port = Number(process.env.PORT) || config.get<number>('API_PORT', 4000);
   const corsOrigins = config
     .get<string>('CORS_ORIGINS', 'http://localhost:3000')
     .split(',')
@@ -57,7 +59,7 @@ async function bootstrap(): Promise<void> {
   }
 
   await app.listen(port, '0.0.0.0');
-  logger.log(`Voyago API listening on http://localhost:${port}/api/v1`);
+  logger.log(`Voyago API listening on port ${port} at /api/v1`);
   if (!isProduction) logger.log(`Swagger UI on http://localhost:${port}/api/docs`);
 }
 

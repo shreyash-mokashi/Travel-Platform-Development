@@ -118,7 +118,9 @@ Last verified: 28 October 2026.
 - [x] GitHub Actions workflow covering lint, types, unit, integration, builds and Playwright
 - [x] Repository reviewed for secrets before committing
 - [ ] **Pushed to GitHub** — awaiting explicit approval; the exact command is in the final report
-- [ ] **Deployed publicly** — blocked on hosting accounts and billing approval
+- [x] Free-tier deployment configuration: `render.yaml`, `apps/web/vercel.json`, keep-warm workflow
+- [x] Platform `PORT` honoured; API client handles a sleeping service with a clear message
+- [ ] **Deployed publicly** — blocked on hosting accounts; the stack itself costs nothing
 
 ---
 

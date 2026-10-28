@@ -23,6 +23,10 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+// Free hosting suspends an idle API, so the first render after a quiet period
+// waits while it wakes. Vercel's default function limit is well under that.
+export const maxDuration = 60;
+
 export async function generateMetadata({
   searchParams,
 }: {
