@@ -13,6 +13,7 @@ concurrency:
 env:
   # CI-only values. Real secrets never appear in this file.
   DATABASE_URL: postgresql://voyago:voyago_ci_password@localhost:5432/voyago?schema=public
+  DIRECT_URL: postgresql://voyago:voyago_ci_password@localhost:5432/voyago?schema=public
   MONGODB_URI: mongodb://localhost:27017/voyago_content
   JWT_ACCESS_SECRET: ci_only_access_secret_not_used_anywhere_else_01
   JWT_REFRESH_SECRET: ci_only_refresh_secret_not_used_anywhere_else_02

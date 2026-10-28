@@ -44,7 +44,12 @@ services:
 
       # --- Secrets: entered in the Render dashboard, never committed ---
       - key: DATABASE_URL
-        sync: false # Neon pooled connection string, with ?sslmode=require
+        sync: false # Neon connection string, with ?sslmode=require
+      # Neon's DIRECT (non-pooled) endpoint - the hostname without "-pooler".
+      # Prisma Migrate needs it; a transaction pooler breaks advisory locks.
+      # If you are not using a pooler, use the same value as DATABASE_URL.
+      - key: DIRECT_URL
+        sync: false
       - key: MONGODB_URI
         sync: false # MongoDB Atlas mongodb+srv:// connection string
       - key: JWT_ACCESS_SECRET

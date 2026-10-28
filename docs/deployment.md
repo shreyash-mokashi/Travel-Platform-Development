@@ -64,10 +64,23 @@ itself. **No real secret is in the repository.**
 ## 1. PostgreSQL on Neon
 
 1. Create a project; name the database `voyago`.
-2. Copy the **pooled** connection string.
-3. Ensure it ends with `?sslmode=require`.
+2. Neon shows two endpoints. You need **both**:
 
-This becomes `DATABASE_URL`.
+   | Render variable | Neon endpoint                                    | Used by             |
+   | --------------- | ------------------------------------------------ | ------------------- |
+   | `DATABASE_URL`  | pooled — hostname contains `-pooler`             | the running API     |
+   | `DIRECT_URL`    | direct — the same hostname **without** `-pooler` | Prisma Migrate only |
+
+3. Make sure both end with `?sslmode=require`.
+
+**Why two.** Prisma Migrate takes a PostgreSQL advisory lock, which does not
+survive a transaction pooler, so `prisma migrate deploy` against the pooled
+endpoint fails or hangs. The schema declares `directUrl`, so migrations use the
+direct connection while the application keeps the pooled one.
+
+If you would rather keep it simple, put the **direct** URL in both variables.
+A single Render service is one long-lived process with Prisma's own pool, so
+it does not need PgBouncer.
 
 ## 2. MongoDB on Atlas
 

@@ -34,6 +34,14 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   DATABASE_URL: string;
 
+  /**
+   * Direct (non-pooled) PostgreSQL connection used only by Prisma Migrate.
+   * Set it to the same value as DATABASE_URL when there is no pooler.
+   */
+  @IsString()
+  @IsNotEmpty()
+  DIRECT_URL: string;
+
   @IsString()
   @IsNotEmpty()
   MONGODB_URI: string;

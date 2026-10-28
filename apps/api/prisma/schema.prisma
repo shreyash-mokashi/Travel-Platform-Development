@@ -7,7 +7,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Runtime connection. May be a pooled endpoint (Neon/PgBouncer).
   url      = env("DATABASE_URL")
+  // Migrations need a direct connection - advisory locks do not survive a
+  // transaction pooler. Locally this is simply the same value as DATABASE_URL.
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
