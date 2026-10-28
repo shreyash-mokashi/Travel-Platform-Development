@@ -32,8 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Version comes from "packageManager" in package.json - specifying it
+      # here as well makes the action fail with a conflict.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
 
       - uses: actions/setup-node@v4
         with:
@@ -79,8 +80,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Version comes from "packageManager" in package.json - specifying it
+      # here as well makes the action fail with a conflict.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
 
       - uses: actions/setup-node@v4
         with:
@@ -91,6 +93,9 @@ jobs:
 
       - name: Build shared package
         run: pnpm --filter @voyago/shared build
+
+      - name: Generate Prisma client
+        run: pnpm --filter @voyago/api exec prisma generate
 
       - name: Apply migrations from an empty database
         run: pnpm --filter @voyago/api exec prisma migrate deploy
@@ -133,8 +138,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Version comes from "packageManager" in package.json - specifying it
+      # here as well makes the action fail with a conflict.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
 
       - uses: actions/setup-node@v4
         with:
@@ -146,6 +152,7 @@ jobs:
       - name: Build everything
         run: |
           pnpm --filter @voyago/shared build
+          pnpm --filter @voyago/api exec prisma generate
           pnpm --filter @voyago/api exec prisma migrate deploy
           pnpm --filter @voyago/api db:seed
           pnpm --filter @voyago/api build
@@ -154,20 +161,44 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
+      # Both servers are started detached with their output captured, so a
+      # startup failure shows the actual reason instead of a bare timeout.
       - name: Start the API
-        run: |
-          pnpm --filter @voyago/api start &
-          npx wait-on http://localhost:4000/api/v1/health --timeout 90000
         env:
           API_PORT: '4000'
+        run: |
+          nohup pnpm --filter @voyago/api start > /tmp/voyago-api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf --max-time 3 http://localhost:4000/api/v1/health >/dev/null && break
+            sleep 2
+          done
+          if ! curl -sf --max-time 5 http://localhost:4000/api/v1/health/ready; then
+            echo "::error::API failed to become ready"
+            cat /tmp/voyago-api.log
+            exit 1
+          fi
 
       - name: Start the web application
         run: |
-          pnpm --filter @voyago/web start &
-          npx wait-on http://localhost:3000 --timeout 90000
+          nohup pnpm --filter @voyago/web start > /tmp/voyago-web.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf --max-time 3 -o /dev/null http://localhost:3000 && break
+            sleep 2
+          done
+          if ! curl -sf --max-time 5 -o /dev/null http://localhost:3000; then
+            echo "::error::Web application failed to start"
+            cat /tmp/voyago-web.log
+            exit 1
+          fi
 
       - name: Run Playwright
         run: pnpm exec playwright test
+
+      - name: Server logs on failure
+        if: failure()
+        run: |
+          echo '--- API ---'; tail -100 /tmp/voyago-api.log || true
+          echo '--- WEB ---'; tail -100 /tmp/voyago-web.log || true
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
