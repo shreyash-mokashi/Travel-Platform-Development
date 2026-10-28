@@ -117,6 +117,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: integration
 
+    # Playwright's own image ships the browsers and their system libraries, so
+    # there is no download step to fail. The tag must track the @playwright/test
+    # version in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+
+    # Inside a container job, services are reached by their label, not
+    # localhost - hence the hostname overrides below.
+    env:
+      DATABASE_URL: postgresql://voyago:voyago_ci_password@postgres:5432/voyago?schema=public
+      DIRECT_URL: postgresql://voyago:voyago_ci_password@postgres:5432/voyago?schema=public
+      MONGODB_URI: mongodb://mongo:27017/voyago_content
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -124,14 +138,12 @@ jobs:
           POSTGRES_USER: voyago
           POSTGRES_PASSWORD: voyago_ci_password
           POSTGRES_DB: voyago
-        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U voyago" --health-interval 5s
           --health-timeout 5s --health-retries 20
 
       mongo:
         image: mongo:7
-        ports: ['27017:27017']
         options: >-
           --health-cmd "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok'"
           --health-interval 10s --health-timeout 5s --health-retries 20
@@ -159,31 +171,16 @@ jobs:
           pnpm --filter @voyago/api build
           pnpm --filter @voyago/web build
 
-      # Split from the browser download so a failure names which half broke.
-      # The runner image already ships most Chromium libraries, so a failure
-      # here is a warning: if a library really is missing, the browser install
-      # or the tests below fail loudly anyway.
-      - name: Install Playwright system dependencies
-        continue-on-error: true
-        run: |
-          pnpm exec playwright install-deps chromium ||
-            echo "::warning::playwright install-deps failed; relying on the runner image libraries"
-
-      - name: Install Playwright browser
-        run: pnpm exec playwright install chromium
-
       # Both servers are started detached with their output captured, so a
       # startup failure shows the actual reason instead of a bare timeout.
+      # Readiness is polled with Node rather than curl: the Playwright container
+      # is not guaranteed to ship curl, but it always ships Node.
       - name: Start the API
         env:
           API_PORT: '4000'
         run: |
           nohup pnpm --filter @voyago/api start > /tmp/voyago-api.log 2>&1 &
-          for i in $(seq 1 60); do
-            curl -sf --max-time 3 http://localhost:4000/api/v1/health >/dev/null && break
-            sleep 2
-          done
-          if ! curl -sf --max-time 5 http://localhost:4000/api/v1/health/ready; then
+          if ! node scripts/wait-for.js http://localhost:4000/api/v1/health/ready 120; then
             echo "::error::API failed to become ready"
             cat /tmp/voyago-api.log
             exit 1
@@ -192,11 +189,7 @@ jobs:
       - name: Start the web application
         run: |
           nohup pnpm --filter @voyago/web start > /tmp/voyago-web.log 2>&1 &
-          for i in $(seq 1 60); do
-            curl -sf --max-time 3 -o /dev/null http://localhost:3000 && break
-            sleep 2
-          done
-          if ! curl -sf --max-time 5 -o /dev/null http://localhost:3000; then
+          if ! node scripts/wait-for.js http://localhost:3000 120; then
             echo "::error::Web application failed to start"
             cat /tmp/voyago-web.log
             exit 1
