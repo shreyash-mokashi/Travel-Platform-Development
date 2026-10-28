@@ -345,15 +345,14 @@ Two environment settings matter when running the suites:
 
 ## Deployment
 
-Voyago is configured to deploy **entirely on free tiers**: Vercel for the frontend, Render for
-the API, Neon for PostgreSQL and MongoDB Atlas for content. `render.yaml` and
-`apps/web/vercel.json` are in the repository; no secret is committed.
+Voyago deploys **entirely on free tiers, with no card required**: both applications on Vercel
+Hobby, PostgreSQL on Neon, MongoDB on Atlas M0. The API ships two entry points from one
+configuration — a long-running server (`src/main.ts`) for local use, CI and any PaaS host, and
+a cached serverless handler (`src/serverless.ts`) for Vercel functions.
 
-The one compromise is that Render's free tier suspends an idle service, so the first request
-after a quiet period waits while it wakes. Three things soften that: the API client shows a
-"the service is waking up" message instead of an error, data-fetching pages allow a 60-second
-render, and `.github/workflows/keep-warm.yml` pings the API every 10 minutes once you set the
-`API_HEALTH_URL` repository variable.
+Render was the original target and `render.yaml` is still in the repository, but Render now
+requires card verification even when every service is free. The Render path is documented as
+an alternative.
 
 **It has not been deployed** — that needs accounts and credentials I do not have. The full
 walkthrough, including what is left for you to do, is in
@@ -379,8 +378,8 @@ These are deliberate scope boundaries for a demonstration project, not defects:
   dynamic route, so the status line is flushed before `notFound()` is reached. The user sees
   the correct page; only the HTTP status is wrong. Fixing it properly would mean validating
   every slug in middleware, adding an API round-trip to every page load for a cosmetic gain.
-- **A free-tier API sleeps when idle.** Expect roughly a 50-second wait on the first visit
-  after a quiet period unless the keep-warm workflow is enabled. This is a hosting-plan
-  trade-off, not an application defect.
+- **Rate limiting weakens when the API runs as serverless functions.** `@nestjs/throttler`
+  counts in memory and each instance has its own, so the limits bound one instance rather than
+  a caller. A long-running host, or a shared throttler store, restores the intended behaviour.
 - **Not production-ready.** The demo works end to end and is tested, but it has not been
   through load testing, a penetration test, or an accessibility audit.

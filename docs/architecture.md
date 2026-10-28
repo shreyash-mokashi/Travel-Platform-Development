@@ -302,6 +302,46 @@ reference exists, which is itself a disclosure.
 
 ---
 
+## 13a. Two entry points, one configuration
+
+The API can run either as a long-running server or as a serverless function,
+and both paths share `src/configure-app.ts`:
+
+| Entry point         | File                | Used by                              |
+| ------------------- | ------------------- | ------------------------------------ |
+| Long-running server | `src/main.ts`       | local development, CI, any PaaS host |
+| Serverless handler  | `src/serverless.ts` | Vercel functions                     |
+
+`configureApp()` installs the global prefix, Helmet, CORS and the
+`ValidationPipe`. Several of those are security controls - most importantly
+`forbidNonWhitelisted`, which is what blocks mass assignment - so the two entry
+points deliberately cannot configure themselves independently and drift apart.
+
+The serverless handler caches the bootstrapped Express instance on the module.
+A warm invocation reuses the existing Nest application and its database
+connections rather than paying start-up again, and concurrent cold invocations
+share a single in-flight bootstrap promise instead of building two.
+
+The function is written in plain JavaScript (`api/[[...path]].js`) that
+requires the compiled output. Vercel compiles functions with esbuild, which
+does not emit the decorator metadata NestJS depends on, so the application is
+compiled ahead of time by `nest build` and only loaded by the function. The
+catch-all filename means a request to `/api/v1/...` reaches the handler with
+its URL unchanged, so no rewrite rules are involved.
+
+### What serverless costs
+
+Running as functions changes two behaviours, both accepted deliberately:
+
+- **Rate limiting weakens.** `@nestjs/throttler` counts requests in memory, and
+  each function instance has its own. The per-minute budgets still bound a
+  single instance but no longer bound a caller across instances. A shared store
+  would be needed for that to hold, which is not worth adding to a demo.
+- **Connection pooling matters.** Many short-lived instances each opening a
+  connection is exactly what a transaction pooler is for, so `DATABASE_URL`
+  should point at Neon's pooled endpoint in this topology, while `DIRECT_URL`
+  stays direct for migrations.
+
 ## 14. Frontend decisions
 
 **Server Components by default.** Pages fetch on the server, so API tokens stay server-side and
