@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    // Nest deletes dist on every build, so a stale .tsbuildinfo would make the
+    // compiler skip emit and leave no output at all. Always do a full build.
+    "incremental": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "prisma", "**/*.spec.ts"]
+}

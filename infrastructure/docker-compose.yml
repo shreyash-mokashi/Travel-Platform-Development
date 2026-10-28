@@ -1,0 +1,41 @@
+# Voyago local development infrastructure.
+# Non-default host ports are used so this stack can coexist with other local
+# databases. Credentials here are development-only placeholders.
+name: voyago
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: voyago_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-voyago}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voyago_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-voyago}
+    ports:
+      - '${POSTGRES_PORT:-5434}:5432'
+    volumes:
+      - voyago_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-voyago} -d ${POSTGRES_DB:-voyago}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7
+    container_name: voyago_mongo
+    restart: unless-stopped
+    ports:
+      - '${MONGO_PORT:-27018}:27017'
+    volumes:
+      - voyago_mongodata:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  voyago_pgdata:
+  voyago_mongodata:

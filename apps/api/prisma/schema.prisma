@@ -1,0 +1,433 @@
+// Voyago - PostgreSQL schema (hotel booking service).
+// All monetary columns are integer minor units (paise) in INR.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum MealPlan {
+  ROOM_ONLY
+  BREAKFAST
+  HALF_BOARD
+  FULL_BOARD
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  PAYMENT_PROCESSING
+  CONFIRMED
+  PAYMENT_FAILED
+  CANCELLATION_REQUESTED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum PaymentScenario {
+  SUCCESS
+  FAILURE
+  PENDING
+}
+
+enum RefundStatus {
+  NOT_APPLICABLE
+  REQUESTED
+  PENDING
+  REFUNDED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         UserRole @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings      Booking[]
+  refreshTokens RefreshToken[]
+  quotes        Quote[]
+  auditLogs     AdminAuditLog[]      @relation("AuditActor")
+  statusEvents  BookingStatusEvent[] @relation("StatusActor")
+
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Destination {
+  id           String   @id @default(uuid()) @db.Uuid
+  slug         String   @unique
+  city         String
+  state        String
+  country      String   @default("India")
+  tagline      String
+  heroImageUrl String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  hotels   Hotel[]
+  bookings Booking[]
+
+  @@index([city])
+  @@map("destinations")
+}
+
+model Hotel {
+  id               String   @id @default(uuid()) @db.Uuid
+  slug             String   @unique
+  destinationId    String   @db.Uuid
+  name             String
+  starRating       Int
+  guestRating      Decimal  @db.Decimal(3, 1)
+  reviewCount      Int      @default(0)
+  addressLine      String
+  locality         String
+  postalCode       String
+  phone            String
+  latitude         Decimal  @db.Decimal(9, 6)
+  longitude        Decimal  @db.Decimal(9, 6)
+  shortDescription String
+  description      String
+  checkInTime      String   @default("14:00")
+  checkOutTime     String   @default("11:00")
+  amenities        String[]
+  policies         String[]
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  destination Destination  @relation(fields: [destinationId], references: [id], onDelete: Restrict)
+  images      HotelImage[]
+  rooms       Room[]
+  bookings    Booking[]
+  quotes      Quote[]
+
+  @@index([destinationId])
+  @@index([starRating])
+  @@index([isActive])
+  @@map("hotels")
+}
+
+model HotelImage {
+  id       String @id @default(uuid()) @db.Uuid
+  hotelId  String @db.Uuid
+  url      String
+  alt      String
+  position Int    @default(0)
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, position])
+  @@map("hotel_images")
+}
+
+model Room {
+  id           String   @id @default(uuid()) @db.Uuid
+  hotelId      String   @db.Uuid
+  name         String
+  description  String
+  maxAdults    Int
+  maxChildren  Int
+  maxOccupancy Int
+  sizeSqm      Int
+  bedType      String
+  amenities    String[]
+  totalRooms   Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  hotel     Hotel           @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  images    RoomImage[]
+  ratePlans RatePlan[]
+  inventory RoomInventory[]
+  bookings  Booking[]
+  quotes    Quote[]
+
+  @@index([hotelId])
+  @@map("rooms")
+}
+
+model RoomImage {
+  id       String @id @default(uuid()) @db.Uuid
+  roomId   String @db.Uuid
+  url      String
+  alt      String
+  position Int    @default(0)
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, position])
+  @@map("room_images")
+}
+
+model CancellationPolicy {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique
+  name        String
+  description String
+  refundable  Boolean
+  /// Ordered tiers: [{ hoursBeforeCheckIn, penaltyBasisPoints, label }]
+  tiers       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ratePlans RatePlan[]
+
+  @@map("cancellation_policies")
+}
+
+model RatePlan {
+  id                   String   @id @default(uuid()) @db.Uuid
+  roomId               String   @db.Uuid
+  cancellationPolicyId String   @db.Uuid
+  code                 String
+  name                 String
+  description          String
+  mealPlan             MealPlan @default(ROOM_ONLY)
+  /// Discount off the room tariff, in basis points (e.g. 1000 = 10%).
+  discountBasisPoints  Int      @default(0)
+  /// Premium added to the room tariff for inclusions such as meals or a more
+  /// flexible cancellation policy, in basis points.
+  supplementBasisPoints Int     @default(0)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  room               Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  cancellationPolicy CancellationPolicy @relation(fields: [cancellationPolicyId], references: [id], onDelete: Restrict)
+  bookings           Booking[]
+  quotes             Quote[]
+
+  @@unique([roomId, code])
+  @@index([roomId])
+  @@map("rate_plans")
+}
+
+/// Per-room, per-night inventory and tariff. One row per room type per date.
+model RoomInventory {
+  id            String   @id @default(uuid()) @db.Uuid
+  roomId        String   @db.Uuid
+  date          DateTime @db.Date
+  roomsOpen     Int
+  baseRateMinor Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, date])
+  @@index([date])
+  @@map("room_inventory")
+}
+
+/// A server-issued price quote. While unexpired and unconsumed it also acts as
+/// a soft inventory hold for `rooms` units of the room type over the stay.
+model Quote {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  hotelId    String   @db.Uuid
+  roomId     String   @db.Uuid
+  ratePlanId String   @db.Uuid
+  checkIn    DateTime @db.Date
+  checkOut   DateTime @db.Date
+  rooms      Int
+  adults     Int
+  children   Int
+  totalMinor Int
+  /// Full PriceBreakdown captured at quote time.
+  breakdown  Json
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  hotel    Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  booking  Booking?
+
+  @@index([roomId, expiresAt, consumedAt])
+  @@index([userId])
+  @@map("quotes")
+}
+
+model Booking {
+  id            String   @id @default(uuid()) @db.Uuid
+  reference     String   @unique
+  userId        String   @db.Uuid
+  hotelId       String   @db.Uuid
+  roomId        String   @db.Uuid
+  ratePlanId    String   @db.Uuid
+  destinationId String   @db.Uuid
+  quoteId       String?  @unique @db.Uuid
+
+  checkIn  DateTime @db.Date
+  checkOut DateTime @db.Date
+  nights   Int
+  rooms    Int
+  adults   Int
+  children Int
+
+  status        BookingStatus @default(PENDING_PAYMENT)
+  paymentStatus PaymentStatus @default(INITIATED)
+  refundStatus  RefundStatus  @default(NOT_APPLICABLE)
+
+  currency    String @default("INR")
+  totalMinor  Int
+  refundMinor Int?
+
+  /// Immutable snapshots taken when the booking was created.
+  priceSnapshot              Json
+  cancellationPolicySnapshot Json
+  hotelSnapshot              Json
+  roomName                   String
+  ratePlanName               String
+  mealPlan                   MealPlan
+
+  contactEmail    String
+  contactPhone    String
+  specialRequests String?
+
+  paymentDeadline DateTime
+  confirmedAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  hotel       Hotel       @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  room        Room        @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  ratePlan    RatePlan    @relation(fields: [ratePlanId], references: [id], onDelete: Restrict)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Restrict)
+  quote       Quote?      @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+
+  guests       BookingGuest[]
+  payments     PaymentAttempt[]
+  statusEvents BookingStatusEvent[]
+  refund       Refund?
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([hotelId])
+  @@index([roomId, checkIn, checkOut])
+  @@map("bookings")
+}
+
+model BookingGuest {
+  id          String  @id @default(uuid()) @db.Uuid
+  bookingId   String  @db.Uuid
+  firstName   String
+  lastName    String
+  isLeadGuest Boolean @default(false)
+  position    Int     @default(0)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_guests")
+}
+
+model PaymentAttempt {
+  id             String          @id @default(uuid()) @db.Uuid
+  bookingId      String          @db.Uuid
+  /// Client-supplied key; guarantees a retried request is not charged twice.
+  idempotencyKey String          @unique
+  scenario       PaymentScenario
+  status         PaymentStatus
+  amountMinor    Int
+  failureReason  String?
+  /// Simulated gateway reference. No real gateway is ever contacted.
+  simulatorRef   String
+  createdAt      DateTime        @default(now())
+  settledAt      DateTime?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@map("payment_attempts")
+}
+
+model BookingStatusEvent {
+  id          String         @id @default(uuid()) @db.Uuid
+  bookingId   String         @db.Uuid
+  fromStatus  BookingStatus?
+  toStatus    BookingStatus
+  note        String?
+  actorUserId String?        @db.Uuid
+  createdAt   DateTime       @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor   User?   @relation("StatusActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@map("booking_status_events")
+}
+
+model Refund {
+  id           String       @id @default(uuid()) @db.Uuid
+  bookingId    String       @unique @db.Uuid
+  status       RefundStatus
+  amountMinor  Int
+  penaltyMinor Int
+  reason       String
+  requestedAt  DateTime     @default(now())
+  settledAt    DateTime?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+model AdminAuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @db.Uuid
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}

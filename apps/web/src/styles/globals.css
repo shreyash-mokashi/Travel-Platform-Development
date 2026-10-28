@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-display: Georgia, 'Times New Roman', serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-sand-100 text-ink antialiased;
+  }
+
+  /* A single visible focus treatment across every interactive element. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2 ring-offset-sand-100;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+}
+
+@layer components {
+  .vg-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .vg-card {
+    @apply rounded-2xl border border-sand-300/70 bg-white shadow-card;
+  }
+
+  .vg-label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-ink-muted;
+  }
+
+  .vg-input {
+    @apply w-full rounded-xl border border-sand-300 bg-white px-3.5 py-2.5 text-sm text-ink
+      placeholder:text-ink-faint focus:border-brand-500 focus:outline-none focus:ring-2
+      focus:ring-brand-500/25 disabled:cursor-not-allowed disabled:bg-sand-200;
+  }
+
+  .vg-input-error {
+    @apply border-coral-600 focus:border-coral-600 focus:ring-coral-600/25;
+  }
+
+  .vg-skeleton {
+    @apply relative overflow-hidden rounded-lg bg-sand-200;
+  }
+
+  .vg-skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r
+      from-transparent via-white/60 to-transparent;
+    content: '';
+  }
+}
+
+@media print {
+  .vg-no-print {
+    display: none !important;
+  }
+
+  body {
+    @apply bg-white;
+  }
+}

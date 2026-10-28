@@ -1,0 +1,51 @@
+/**
+ * Curated Unsplash photo ids used for demo imagery. Every id was verified to
+ * resolve. Images are illustrative only - these are not real properties.
+ */
+const UNSPLASH_IDS = [
+  '1566073771259-6a8506099945',
+  '1571896349842-33c89424de2d',
+  '1551882547-ff40c63fe5fa',
+  '1542314831-068cd1dbfeeb',
+  '1584132967334-10e028bd69f7',
+  '1618773928121-c32242e63f39',
+  '1611892440504-42a792e24d32',
+  '1582719478250-c89cae4dc85b',
+  '1590490360182-c33d57733427',
+  '1540518614846-7eded433c457',
+  '1445019980597-93fa8acb246c',
+  '1578683010236-d716f9a3f461',
+  '1596394516093-501ba68a0ba6',
+  '1455587734955-081b22074882',
+  '1520250497591-112f2f40a3f4',
+  '1631049307264-da0ec9d70304',
+  '1587985064135-0366536eab42',
+  '1631049035182-249067d7618e',
+  '1512918728675-ed5a9ecdebfd',
+  '1559599189-fe84dea4eb79',
+  '1566665797739-1674de7a421a',
+  '1549294413-26f195200c16',
+  '1535827841776-24afc1e255ac',
+  '1517840901100-8179e982acb7',
+  '1564501049412-61c2a3083791',
+  '1568084680786-a84f91d1153c',
+  '1522771739844-6a9f6d5f14af',
+  '1621293954908-907159247fc8',
+  '1586611292717-f828b167408c',
+  '1559841644-08984562005a',
+  '1582582621959-48d27397dc69',
+  '1540541338287-41700207dee6',
+  '1583422409516-2895a77efded',
+  '1600585154340-be6161a56a0c',
+  '1502672260266-1c1ef2d93688',
+  '1493809842364-78817add7ffb',
+  '1505693416388-ac5ce068fe85',
+  '1522708323590-d24dbb6b0267',
+];
+
+export function imageUrl(index: number, width = 1200, height = 800): string {
+  const id = UNSPLASH_IDS[index % UNSPLASH_IDS.length];
+  return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${width}&h=${height}&q=80`;
+}
+
+export const IMAGE_POOL_SIZE = UNSPLASH_IDS.length;

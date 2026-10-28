@@ -1,0 +1,35 @@
+{
+  "name": "voyago",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voyago - travel booking platform (hotel service MVP)",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --filter @voyago/shared build && pnpm --filter @voyago/api build && pnpm --filter @voyago/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,css}\"",
+    "infra:up": "docker compose -f infrastructure/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infrastructure/docker-compose.yml down",
+    "infra:reset": "docker compose -f infrastructure/docker-compose.yml down -v && docker compose -f infrastructure/docker-compose.yml up -d",
+    "db:migrate": "pnpm --filter @voyago/api db:migrate",
+    "db:deploy": "pnpm --filter @voyago/api db:deploy",
+    "db:seed": "pnpm --filter @voyago/api db:seed",
+    "db:reset": "pnpm --filter @voyago/api db:reset",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "20.19.9",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3"
+  }
+}
