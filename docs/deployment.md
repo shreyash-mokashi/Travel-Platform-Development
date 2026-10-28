@@ -108,8 +108,16 @@ This becomes `MONGODB_URI`.
 
 ## 4. Frontend on Vercel
 
-1. Import the repository. Set **Root Directory** to `apps/web`.
-2. Vercel reads `apps/web/vercel.json` for the install and build commands.
+1. Import the repository, then **Settings → General → Root Directory → `apps/web`**.
+
+   This is not optional and it is the most common failure. Left unset, Vercel
+   builds from the repository root, runs the root `build` script, and tries to
+   compile the **API** as well — which it should never do. The symptom is a
+   build log containing `pnpm --filter @voyago/api build`.
+
+2. Vercel then reads `apps/web/vercel.json` for the install and build commands.
+   `pnpm install` from `apps/web` still installs all four workspace projects,
+   and `--filter` resolves across the workspace, so nothing else is needed.
 3. Environment variables:
 
    ```
@@ -118,7 +126,11 @@ This becomes `MONGODB_URI`.
    NEXT_PUBLIC_SITE_URL=https://<your-project>.vercel.app
    ```
 
-4. Deploy, then **go back to Render** and set `CORS_ORIGINS` to the exact Vercel origin
+4. Deploy. If `NEXT_PUBLIC_API_URL` or `API_INTERNAL_URL` is missing the build
+   fails on purpose, naming the variable — a deploy that silently points at
+   `localhost` is worse than one that does not finish.
+
+   Then **go back to Render** and set `CORS_ORIGINS` to the exact Vercel origin
    (`https://<your-project>.vercel.app`, no trailing slash). Redeploy the API.
 
    Skipping this is the single most common cause of a frontend that loads but cannot search.
