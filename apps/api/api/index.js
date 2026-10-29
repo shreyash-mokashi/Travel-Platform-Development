@@ -4,6 +4,8 @@
 // does not emit the decorator metadata NestJS depends on. The Nest application
 // is therefore compiled ahead of time by `nest build` and only required here.
 //
-// The filename is a catch-all, so /api/v1/<anything> reaches this function
-// with req.url unchanged and Nest's own router handles the path.
+// Routing: vercel.json rewrites /api/(.*) to this function. Vercel preserves
+// the original request URL on rewrites, so Nest's router sees /api/v1/<path>.
+// (Bracket catch-all filenames are a Next.js convention; plain api/ functions
+// deployed them at their literal, percent-encoded URL - verified in prod.)
 module.exports = require('../dist/serverless.js').default;
