@@ -15,8 +15,9 @@ function assertDeploymentConfig(): void {
   throw new Error(
     `Missing required environment variable(s): ${missing.join(', ')}.\n` +
       'Set them in Vercel under Settings -> Environment Variables to your ' +
-      'deployed API, for example https://voyago-api.onrender.com/api/v1 ' +
-      '(include the /api/v1 suffix). See docs/deployment.md step 4.',
+      'deployed API project, for example https://voyago-api.vercel.app/api/v1 ' +
+      '(include the /api/v1 suffix). The API is a separate Vercel project and ' +
+      'must be deployed first. See docs/deployment.md step 5.',
   );
 }
 
