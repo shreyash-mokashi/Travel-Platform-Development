@@ -23,7 +23,7 @@ const COLUMNS = [
   {
     title: 'Coming next',
     links: [
-      { href: '/roadmap', label: 'Flights' },
+      { href: '/flights', label: 'Flights' },
       { href: '/roadmap', label: 'Holiday packages' },
       { href: '/roadmap', label: 'Activities' },
       { href: '/roadmap', label: 'Car rentals' },

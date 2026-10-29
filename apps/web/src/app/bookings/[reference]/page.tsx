@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { formatDisplayDate, formatMoney, type BookingView } from '@voyago/shared';
+import {
+  formatDisplayDate,
+  formatMoney,
+  type BookingView,
+  type FlightBookingView,
+} from '@voyago/shared';
 import { BookingTimeline } from '@/components/booking/BookingTimeline';
 import { CancelBookingForm } from '@/components/booking/CancelBookingForm';
 import { ResolvePendingForm } from '@/components/booking/ResolvePendingForm';
@@ -12,7 +17,9 @@ import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StarRating } from '@/components/ui/Rating';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { FlightBookingDetail } from '@/components/booking/FlightBookingDetail';
 import { apiFetchOrNull } from '@/lib/api';
+import { productOf } from '@/lib/booking-product';
 import { getCurrentUser, loginPathFor } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -43,7 +50,25 @@ export default async function BookingDetailPage({
   const user = await getCurrentUser();
   if (!user) redirect(loginPathFor(`/bookings/${reference}`));
 
-  const booking = await apiFetchOrNull<BookingView>(`/bookings/${reference}`);
+  if (productOf(reference) === 'flight') {
+    const flightBooking = await apiFetchOrNull<FlightBookingView>(`/flight-bookings/${reference}`);
+    if (flightBooking) {
+      return (
+        <FlightBookingDetail
+          booking={flightBooking}
+          justPaid={justPaid}
+          cancelled={cancelled}
+          cancelError={cancelError}
+        />
+      );
+    }
+    // Falls through to the shared not-found state below.
+  }
+
+  const booking =
+    productOf(reference) === 'flight'
+      ? null
+      : await apiFetchOrNull<BookingView>(`/bookings/${reference}`);
   if (!booking) {
     return (
       <div className="vg-container py-12">

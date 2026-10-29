@@ -1,12 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { formatDisplayDate, formatMoney, type BookingView } from '@voyago/shared';
+import {
+  formatDisplayDate,
+  formatMoney,
+  type BookingView,
+  type FlightBookingView,
+} from '@voyago/shared';
 import { PrintButton } from '@/components/booking/PrintButton';
 import { Logo } from '@/components/Logo';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FlightEticket } from '@/components/booking/FlightEticket';
 import { apiFetchOrNull } from '@/lib/api';
+import { productOf } from '@/lib/booking-product';
 import { getCurrentUser, loginPathFor } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +32,37 @@ export default async function VoucherPage({ params }: { params: Promise<{ refere
 
   const user = await getCurrentUser();
   if (!user) redirect(loginPathFor(`/bookings/${reference}/voucher`));
+
+  if (productOf(reference) === 'flight') {
+    const flightBooking = await apiFetchOrNull<FlightBookingView>(`/flight-bookings/${reference}`);
+    if (!flightBooking) {
+      return (
+        <div className="vg-container py-12">
+          <EmptyState
+            title="E-ticket not available"
+            description="We could not find that booking under your account."
+            icon="🔒"
+            action={<ButtonLink href="/bookings">View my bookings</ButtonLink>}
+          />
+        </div>
+      );
+    }
+    if (!['CONFIRMED', 'CANCELLATION_REQUESTED'].includes(flightBooking.status)) {
+      return (
+        <div className="vg-container py-12">
+          <EmptyState
+            title="E-ticket not available yet"
+            description="An e-ticket is issued once the booking is confirmed. Complete the demo payment to receive one."
+            icon="🎫"
+            action={
+              <ButtonLink href={`/bookings/${flightBooking.reference}`}>Back to booking</ButtonLink>
+            }
+          />
+        </div>
+      );
+    }
+    return <FlightEticket booking={flightBooking} />;
+  }
 
   const booking = await apiFetchOrNull<BookingView>(`/bookings/${reference}`);
   if (!booking) {

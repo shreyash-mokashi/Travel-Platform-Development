@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Destination, HotelSummary } from '@voyago/shared';
+import type { AirportView, Destination, HotelSummary } from '@voyago/shared';
+import { FlightSearchWidget } from '@/components/flights/FlightSearchWidget';
+import { SearchTabs } from '@/components/search/SearchTabs';
 import { SearchWidget } from '@/components/search/SearchWidget';
 import { ButtonLink } from '@/components/ui/Button';
 import { DemoNotice } from '@/components/ui/DemoNotice';
@@ -15,9 +17,10 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export default async function HomePage() {
-  const [destinations, featured] = await Promise.all([
+  const [destinations, featured, airports] = await Promise.all([
     apiFetch<Destination[]>('/destinations', { auth: false }),
     apiFetch<HotelSummary[]>('/hotels/featured', { auth: false }),
+    apiFetch<AirportView[]>('/flights/airports', { auth: false }),
   ]);
 
   const stay = defaultStay();
@@ -44,28 +47,34 @@ export default async function HomePage() {
         <div className="vg-container relative py-16 sm:py-24">
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sand-200 ring-1 ring-white/20">
-              Portfolio demo · Hotels
+              Portfolio demo · Hotels &amp; Flights
             </span>
             <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-white sm:text-5xl">
-              Find a place to stay across India
+              Stays and flights across India
             </h1>
             <p className="mt-4 text-base leading-relaxed text-sand-200 sm:text-lg">
-              Search 25 demo properties in six cities, compare real room rates and cancellation
-              policies, and complete a full booking with a simulated payment.
+              Search 25 demo properties and a 48-flight network across six cities, compare real
+              rates, fares and cancellation rules, and complete a full booking with a simulated
+              payment.
             </p>
           </div>
 
           <div className="mt-8">
-            <SearchWidget
-              destinations={destinations}
-              defaults={{
-                destination: '',
-                checkIn: stay.checkIn,
-                checkOut: stay.checkOut,
-                rooms: 1,
-                adults: 2,
-                children: 0,
-              }}
+            <SearchTabs
+              hotels={
+                <SearchWidget
+                  destinations={destinations}
+                  defaults={{
+                    destination: '',
+                    checkIn: stay.checkIn,
+                    checkOut: stay.checkOut,
+                    rooms: 1,
+                    adults: 2,
+                    children: 0,
+                  }}
+                />
+              }
+              flights={<FlightSearchWidget airports={airports} />}
             />
             <p className="mt-3 text-xs text-sand-200/80">
               All inventory, pricing and payments on Voyago are simulated. No real bookings are made

@@ -17,14 +17,15 @@ const SERVICES = [
   },
   {
     name: 'Flight booking',
-    status: 'Next' as const,
+    status: 'Built' as const,
     description:
-      'Reuses the quote, booking, payment and refund core. Adds fare families, segments and ' +
-      'passenger types in place of rooms and rate plans.',
+      'One-way flights across six cities with fare families (Saver, Flexi, Business), seat ' +
+      'inventory, server-side fare recheck, passenger details, demo payments, e-tickets and ' +
+      'fare-rule cancellation - on the same quote, booking, payment and refund core as hotels.',
   },
   {
     name: 'Holiday packages',
-    status: 'Planned' as const,
+    status: 'Next' as const,
     description: 'Composes hotel and flight inventory into a single bookable itinerary.',
   },
   {
@@ -49,8 +50,8 @@ export default function RoadmapPage() {
       <h1 className="font-display text-3xl font-bold text-ink">Platform roadmap</h1>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">
         Voyago is built as a modular monolith so each travel service can be added without rewriting
-        the application. The hotel service is complete end to end and defines the patterns the
-        remaining services follow.
+        the application. The hotel and flight services are complete end to end and define the
+        patterns the remaining services follow.
       </p>
 
       <ul className="mt-8 space-y-4">
@@ -67,6 +68,9 @@ export default function RoadmapPage() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <ButtonLink href="/">Search demo hotels</ButtonLink>
+        <ButtonLink href="/flights" variant="secondary">
+          Search demo flights
+        </ButtonLink>
         <ButtonLink href="/destinations" variant="secondary">
           Browse destinations
         </ButtonLink>

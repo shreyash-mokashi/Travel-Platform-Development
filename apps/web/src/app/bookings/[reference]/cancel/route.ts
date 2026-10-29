@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { apiFetch } from '@/lib/api';
+import { bookingApiBase } from '@/lib/booking-product';
 import { toUserMessage } from '@/lib/api-error';
 
 /**
@@ -22,7 +23,10 @@ export async function POST(
 
   const target = new URL(`/bookings/${reference}`, request.url);
   try {
-    await apiFetch(`/bookings/${reference}/cancellation`, { method: 'POST', body: { reason } });
+    await apiFetch(`${bookingApiBase(reference)}/${reference}/cancellation`, {
+      method: 'POST',
+      body: { reason },
+    });
     target.searchParams.set('cancelled', '1');
   } catch (error) {
     target.searchParams.set(

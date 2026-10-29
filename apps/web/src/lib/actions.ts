@@ -2,9 +2,15 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { BookingView, QuoteResponse } from '@voyago/shared';
+import type {
+  BookingView,
+  FlightBookingView,
+  FlightQuoteView,
+  QuoteResponse,
+} from '@voyago/shared';
 import { apiFetch } from './api';
 import { ApiError, toUserMessage } from './api-error';
+import { bookingApiBase } from './booking-product';
 import type { ActionState } from './action-state';
 import { clearSession, getRefreshToken, login, register } from './session';
 
@@ -168,6 +174,73 @@ export async function createBookingAction(
   redirect(`/checkout/payment/${booking.reference}`);
 }
 
+/**
+ * Creates a server-side fare quote and sends the user to flight checkout.
+ * The price shown in results is passed only so the next page can flag a change.
+ */
+export async function createFlightQuoteAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const payload = {
+    flightId: String(formData.get('flightId') ?? ''),
+    fareClassId: String(formData.get('fareClassId') ?? ''),
+    date: String(formData.get('date') ?? ''),
+    adults: Number(formData.get('adults') ?? 1),
+    children: Number(formData.get('children') ?? 0),
+    expectedTotalMinor: Number(formData.get('expectedTotalMinor') ?? 0) || undefined,
+  };
+
+  let quote: FlightQuoteView;
+  try {
+    quote = await apiFetch<FlightQuoteView>('/flight-quotes', { method: 'POST', body: payload });
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error, 'That fare could not be held.') };
+  }
+
+  redirect(`/flights/checkout/${quote.quoteId}`);
+}
+
+export async function createFlightBookingAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const passengerCount = Number(formData.get('passengerCount') ?? 1);
+  const passengers = Array.from({ length: Math.max(1, passengerCount) }, (_, index) => ({
+    firstName: String(formData.get(`passengerFirstName-${index}`) ?? '').trim(),
+    lastName: String(formData.get(`passengerLastName-${index}`) ?? '').trim(),
+    isLeadPassenger: index === 0,
+  }));
+
+  const payload = {
+    quoteId: String(formData.get('quoteId') ?? ''),
+    contactEmail: String(formData.get('contactEmail') ?? '').trim(),
+    contactPhone: String(formData.get('contactPhone') ?? '').trim(),
+    acceptedCancellationPolicy: formData.get('acceptedCancellationPolicy') === 'on',
+    passengers,
+  };
+
+  if (!payload.acceptedCancellationPolicy) {
+    return { ok: false, message: 'Please accept the fare rules to continue.' };
+  }
+
+  let booking: FlightBookingView;
+  try {
+    booking = await apiFetch<FlightBookingView>('/flight-bookings', {
+      method: 'POST',
+      body: payload,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      message: toUserMessage(error, 'Your booking could not be created.'),
+      fieldErrors: fieldErrorsFrom(error),
+    };
+  }
+
+  redirect(`/checkout/payment/${booking.reference}`);
+}
+
 export async function payBookingAction(
   _prev: ActionState,
   formData: FormData,
@@ -178,7 +251,7 @@ export async function payBookingAction(
   const idempotencyKey = String(formData.get('idempotencyKey') ?? '');
 
   try {
-    await apiFetch(`/bookings/${reference}/payments`, {
+    await apiFetch(`${bookingApiBase(reference)}/${reference}/payments`, {
       method: 'POST',
       body: { scenario, idempotencyKey },
     });
@@ -198,7 +271,7 @@ export async function resolvePendingPaymentAction(
   const outcome = String(formData.get('outcome') ?? 'SUCCESS');
 
   try {
-    await apiFetch(`/bookings/${reference}/payments/resolve`, {
+    await apiFetch(`${bookingApiBase(reference)}/${reference}/payments/resolve`, {
       method: 'POST',
       body: { outcome },
     });

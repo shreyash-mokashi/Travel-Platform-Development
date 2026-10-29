@@ -7,6 +7,7 @@ import { MobileNav } from './MobileNav';
 
 const NAV_LINKS = [
   { href: '/', label: 'Hotels' },
+  { href: '/flights', label: 'Flights' },
   { href: '/destinations', label: 'Destinations' },
   { href: '/bookings', label: 'My bookings' },
 ];
