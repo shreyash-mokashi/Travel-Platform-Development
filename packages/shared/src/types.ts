@@ -265,3 +265,112 @@ export interface AuthResponse {
   accessToken: string;
   expiresIn: number;
 }
+
+// ─────────────────────────────── Flight views ───────────────────────────────
+
+import type { CabinValue, FareCodeValue, FarePriceBreakdown } from './flights';
+
+export interface AirportView {
+  iata: string;
+  name: string;
+  city: string;
+}
+
+export interface FlightSegmentView {
+  flightId: string;
+  airline: { code: string; name: string };
+  flightNumber: string;
+  origin: AirportView;
+  destination: AirportView;
+  /** Travel date, ISO yyyy-mm-dd. */
+  date: string;
+  departureMinute: number;
+  arrivalMinute: number;
+  /** Midnights crossed; 0 for same-day arrival. */
+  dayOffset: number;
+  durationMinutes: number;
+  aircraft: string;
+}
+
+export interface FareOfferView {
+  fareClassId: string;
+  code: FareCodeValue;
+  name: string;
+  cabin: CabinValue;
+  checkinBaggageKg: number;
+  cabinBaggageKg: number;
+  mealIncluded: boolean;
+  seatSelectionIncluded: boolean;
+  seatsLeft: number;
+  refundable: boolean;
+  cancellationPolicy: CancellationPolicy;
+  price: FarePriceBreakdown;
+}
+
+export interface FlightOfferView {
+  segment: FlightSegmentView;
+  fares: FareOfferView[];
+  /** Cheapest available fare total, for sorting and the results card. */
+  leadTotalMinor: number;
+}
+
+export interface FlightSearchResponse {
+  searchId: string;
+  origin: AirportView;
+  destination: AirportView;
+  date: string;
+  adults: number;
+  children: number;
+  currency: string;
+  items: FlightOfferView[];
+  total: number;
+}
+
+export interface FlightQuoteView {
+  quoteId: string;
+  expiresAt: string;
+  segment: FlightSegmentView;
+  fare: FareOfferView;
+  adults: number;
+  children: number;
+  currency: string;
+  priceChanged: boolean;
+  previousTotalMinor: number | null;
+}
+
+export interface FlightPassengerInput {
+  firstName: string;
+  lastName: string;
+  isLeadPassenger?: boolean;
+}
+
+export interface FlightBookingView {
+  id: string;
+  reference: string;
+  status: BookingStatus;
+  paymentStatus: PaymentStatus;
+  refundStatus: RefundStatus;
+  currency: string;
+  travelDate: string;
+  adults: number;
+  children: number;
+  segment: FlightSegmentView;
+  fareName: string;
+  cabin: CabinValue;
+  cancellationPolicy: CancellationPolicy;
+  priceSnapshot: FarePriceBreakdown;
+  totalMinor: number;
+  refundMinor: number | null;
+  contact: BookingContact;
+  passengers: Array<{ firstName: string; lastName: string; isLeadPassenger: boolean }>;
+  paymentAttempts: PaymentAttemptView[];
+  statusHistory: BookingStatusEventView[];
+  cancellationPreview?: {
+    refundMinor: number;
+    penaltyMinor: number;
+    reason: string;
+  } | null;
+  paymentDeadline: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

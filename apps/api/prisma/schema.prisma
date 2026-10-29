@@ -2,7 +2,7 @@
 // All monetary columns are integer minor units (paise) in INR.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // "native" covers local and CI (Debian/Ubuntu). Vercel's Node runtime is
   // Amazon Linux 2023, which needs the rhel-openssl-3.0.x engine; without it
   // the function fails at runtime with "Query engine not found".
@@ -10,9 +10,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   // Runtime connection. May be a pooled endpoint (Neon/PgBouncer).
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
   // Migrations need a direct connection - advisory locks do not survive a
   // transaction pooler. Locally this is simply the same value as DATABASE_URL.
   directUrl = env("DIRECT_URL")
@@ -79,6 +79,10 @@ model User {
   auditLogs     AdminAuditLog[]      @relation("AuditActor")
   statusEvents  BookingStatusEvent[] @relation("StatusActor")
 
+  flightQuotes       FlightQuote[]
+  flightBookings     FlightBooking[]
+  flightStatusEvents FlightBookingStatusEvent[] @relation("FlightStatusActor")
+
   @@index([role])
   @@map("users")
 }
@@ -112,6 +116,7 @@ model Destination {
 
   hotels   Hotel[]
   bookings Booking[]
+  airports Airport[]
 
   @@index([city])
   @@map("destinations")
@@ -217,27 +222,28 @@ model CancellationPolicy {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  ratePlans RatePlan[]
+  ratePlans   RatePlan[]
+  fareClasses FareClass[]
 
   @@map("cancellation_policies")
 }
 
 model RatePlan {
-  id                   String   @id @default(uuid()) @db.Uuid
-  roomId               String   @db.Uuid
-  cancellationPolicyId String   @db.Uuid
-  code                 String
-  name                 String
-  description          String
-  mealPlan             MealPlan @default(ROOM_ONLY)
+  id                    String   @id @default(uuid()) @db.Uuid
+  roomId                String   @db.Uuid
+  cancellationPolicyId  String   @db.Uuid
+  code                  String
+  name                  String
+  description           String
+  mealPlan              MealPlan @default(ROOM_ONLY)
   /// Discount off the room tariff, in basis points (e.g. 1000 = 10%).
-  discountBasisPoints  Int      @default(0)
+  discountBasisPoints   Int      @default(0)
   /// Premium added to the room tariff for inclusions such as meals or a more
   /// flexible cancellation policy, in basis points.
-  supplementBasisPoints Int     @default(0)
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  supplementBasisPoints Int      @default(0)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   room               Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
   cancellationPolicy CancellationPolicy @relation(fields: [cancellationPolicyId], references: [id], onDelete: Restrict)
@@ -269,13 +275,13 @@ model RoomInventory {
 /// A server-issued price quote. While unexpired and unconsumed it also acts as
 /// a soft inventory hold for `rooms` units of the room type over the stay.
 model Quote {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String?  @db.Uuid
-  hotelId    String   @db.Uuid
-  roomId     String   @db.Uuid
-  ratePlanId String   @db.Uuid
-  checkIn    DateTime @db.Date
-  checkOut   DateTime @db.Date
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String?   @db.Uuid
+  hotelId    String    @db.Uuid
+  roomId     String    @db.Uuid
+  ratePlanId String    @db.Uuid
+  checkIn    DateTime  @db.Date
+  checkOut   DateTime  @db.Date
   rooms      Int
   adults     Int
   children   Int
@@ -284,7 +290,7 @@ model Quote {
   breakdown  Json
   expiresAt  DateTime
   consumedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   hotel    Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
@@ -298,14 +304,14 @@ model Quote {
 }
 
 model Booking {
-  id            String   @id @default(uuid()) @db.Uuid
-  reference     String   @unique
-  userId        String   @db.Uuid
-  hotelId       String   @db.Uuid
-  roomId        String   @db.Uuid
-  ratePlanId    String   @db.Uuid
-  destinationId String   @db.Uuid
-  quoteId       String?  @unique @db.Uuid
+  id            String  @id @default(uuid()) @db.Uuid
+  reference     String  @unique
+  userId        String  @db.Uuid
+  hotelId       String  @db.Uuid
+  roomId        String  @db.Uuid
+  ratePlanId    String  @db.Uuid
+  destinationId String  @db.Uuid
+  quoteId       String? @unique @db.Uuid
 
   checkIn  DateTime @db.Date
   checkOut DateTime @db.Date
@@ -438,4 +444,260 @@ model AdminAuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("admin_audit_logs")
+}
+
+// ─────────────────────────────── Flight service ───────────────────────────────
+// The flight service mirrors the hotel patterns one to one - its own quote,
+// booking, payment-attempt, status-event and refund tables - instead of
+// generalising the hotel tables. Shared machinery (BookingStatus transitions,
+// payment scenarios, cancellation policies, refund statuses) is reused via the
+// same enums and the CancellationPolicy table; nothing hotel-shaped changes.
+
+enum FareCode {
+  SAVER
+  FLEXI
+  BUSINESS
+}
+
+enum Cabin {
+  ECONOMY
+  BUSINESS
+}
+
+model Airline {
+  id   String @id @default(uuid()) @db.Uuid
+  /// Fictional two-letter code; no real carrier is represented.
+  code String @unique
+  name String
+
+  flights Flight[]
+
+  @@map("airlines")
+}
+
+model Airport {
+  id            String  @id @default(uuid()) @db.Uuid
+  iata          String  @unique
+  name          String
+  city          String
+  destinationId String? @db.Uuid
+  latitude      Decimal @db.Decimal(9, 6)
+  longitude     Decimal @db.Decimal(9, 6)
+
+  destination Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  departures  Flight[]     @relation("FlightOrigin")
+  arrivals    Flight[]     @relation("FlightDestination")
+
+  @@map("airports")
+}
+
+/// A scheduled service, e.g. "AD 412 BOM->GOI, departs 06:40, daily".
+/// Concrete sellable departures come from FlightInventory rows per date.
+model Flight {
+  id              String  @id @default(uuid()) @db.Uuid
+  airlineId       String  @db.Uuid
+  flightNumber    String
+  originId        String  @db.Uuid
+  destinationId   String  @db.Uuid
+  /// Minutes after local midnight; avoids timezone arithmetic in a demo
+  /// where every airport shares IST.
+  departureMinute Int
+  durationMinutes Int
+  aircraft        String
+  /// Bitmask of operating days, Monday = bit 0 ... Sunday = bit 6.
+  daysOfWeek      Int
+  isActive        Boolean @default(true)
+
+  airline     Airline @relation(fields: [airlineId], references: [id], onDelete: Restrict)
+  origin      Airport @relation("FlightOrigin", fields: [originId], references: [id], onDelete: Restrict)
+  destination Airport @relation("FlightDestination", fields: [destinationId], references: [id], onDelete: Restrict)
+
+  fareClasses FareClass[]
+  inventory   FlightInventory[]
+  quotes      FlightQuote[]
+  bookings    FlightBooking[]
+
+  @@unique([airlineId, flightNumber])
+  @@index([originId, destinationId])
+  @@map("flights")
+}
+
+model FareClass {
+  id                    String   @id @default(uuid()) @db.Uuid
+  flightId              String   @db.Uuid
+  code                  FareCode
+  name                  String
+  cabin                 Cabin
+  checkinBaggageKg      Int
+  cabinBaggageKg        Int
+  mealIncluded          Boolean  @default(false)
+  seatSelectionIncluded Boolean  @default(false)
+  /// Applied to the nightly base fare the same way rate plans price rooms.
+  supplementBasisPoints Int      @default(0)
+  discountBasisPoints   Int      @default(0)
+  cancellationPolicyId  String   @db.Uuid
+  createdAt             DateTime @default(now())
+
+  flight             Flight             @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  cancellationPolicy CancellationPolicy @relation(fields: [cancellationPolicyId], references: [id], onDelete: Restrict)
+  inventory          FlightInventory[]
+  quotes             FlightQuote[]
+  bookings           FlightBooking[]
+
+  @@unique([flightId, code])
+  @@map("fare_classes")
+}
+
+model FlightInventory {
+  id            String   @id @default(uuid()) @db.Uuid
+  flightId      String   @db.Uuid
+  fareClassId   String   @db.Uuid
+  date          DateTime @db.Date
+  seatsOpen     Int
+  baseFareMinor Int
+
+  flight    Flight    @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  fareClass FareClass @relation(fields: [fareClassId], references: [id], onDelete: Cascade)
+
+  @@unique([flightId, fareClassId, date])
+  @@index([date])
+  @@map("flight_inventory")
+}
+
+model FlightQuote {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String?   @db.Uuid
+  flightId    String    @db.Uuid
+  fareClassId String    @db.Uuid
+  date        DateTime  @db.Date
+  adults      Int
+  children    Int
+  totalMinor  Int
+  /// Full FarePriceBreakdown captured at quote time.
+  breakdown   Json
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  flight    Flight         @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  fareClass FareClass      @relation(fields: [fareClassId], references: [id], onDelete: Cascade)
+  booking   FlightBooking?
+
+  @@map("flight_quotes")
+}
+
+model FlightBooking {
+  id          String  @id @default(uuid()) @db.Uuid
+  reference   String  @unique
+  userId      String  @db.Uuid
+  flightId    String  @db.Uuid
+  fareClassId String  @db.Uuid
+  quoteId     String? @unique @db.Uuid
+
+  travelDate DateTime @db.Date
+  adults     Int
+  children   Int
+
+  status        BookingStatus @default(PENDING_PAYMENT)
+  paymentStatus PaymentStatus @default(INITIATED)
+  refundStatus  RefundStatus  @default(NOT_APPLICABLE)
+
+  currency    String @default("INR")
+  totalMinor  Int
+  refundMinor Int?
+
+  /// Immutable snapshots taken when the booking was created.
+  priceSnapshot              Json
+  cancellationPolicySnapshot Json
+  flightSnapshot             Json
+  fareName                   String
+  cabin                      Cabin
+
+  contactEmail String
+  contactPhone String
+
+  paymentDeadline DateTime
+  confirmedAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  flight    Flight       @relation(fields: [flightId], references: [id], onDelete: Restrict)
+  fareClass FareClass    @relation(fields: [fareClassId], references: [id], onDelete: Restrict)
+  quote     FlightQuote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+
+  passengers      FlightPassenger[]
+  paymentAttempts FlightPaymentAttempt[]
+  statusEvents    FlightBookingStatusEvent[]
+  refund          FlightRefund?
+
+  @@index([userId, createdAt])
+  @@map("flight_bookings")
+}
+
+model FlightPassenger {
+  id              String  @id @default(uuid()) @db.Uuid
+  bookingId       String  @db.Uuid
+  firstName       String
+  lastName        String
+  isLeadPassenger Boolean @default(false)
+  position        Int     @default(0)
+
+  booking FlightBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("flight_passengers")
+}
+
+model FlightPaymentAttempt {
+  id             String          @id @default(uuid()) @db.Uuid
+  bookingId      String          @db.Uuid
+  /// Client-supplied key; guarantees a retried request is not charged twice.
+  idempotencyKey String          @unique
+  scenario       PaymentScenario
+  status         PaymentStatus
+  amountMinor    Int
+  failureReason  String?
+  /// Simulated gateway reference. No real gateway is ever contacted.
+  simulatorRef   String
+  createdAt      DateTime        @default(now())
+  settledAt      DateTime?
+
+  booking FlightBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@map("flight_payment_attempts")
+}
+
+model FlightBookingStatusEvent {
+  id          String         @id @default(uuid()) @db.Uuid
+  bookingId   String         @db.Uuid
+  fromStatus  BookingStatus?
+  toStatus    BookingStatus
+  note        String?
+  actorUserId String?        @db.Uuid
+  createdAt   DateTime       @default(now())
+
+  booking FlightBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor   User?         @relation("FlightStatusActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@map("flight_booking_status_events")
+}
+
+model FlightRefund {
+  id           String       @id @default(uuid()) @db.Uuid
+  bookingId    String       @unique @db.Uuid
+  status       RefundStatus
+  amountMinor  Int
+  penaltyMinor Int
+  reason       String
+  requestedAt  DateTime     @default(now())
+  settledAt    DateTime?
+
+  booking FlightBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("flight_refunds")
 }
