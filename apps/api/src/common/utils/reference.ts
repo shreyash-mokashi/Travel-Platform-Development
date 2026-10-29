@@ -12,6 +12,15 @@ export function generateBookingReference(): string {
   return `VYG-${body}`;
 }
 
+/** Flight bookings use their own prefix so a reference names its product. */
+export function generateFlightReference(): string {
+  let body = '';
+  for (let index = 0; index < 8; index += 1) {
+    body += ALPHABET[randomInt(ALPHABET.length)];
+  }
+  return `VYF-${body}`;
+}
+
 export function generateSimulatorRef(): string {
   let body = '';
   for (let index = 0; index < 12; index += 1) {

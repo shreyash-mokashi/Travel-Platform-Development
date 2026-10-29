@@ -168,7 +168,10 @@ export function formatDuration(minutes: number): string {
 }
 
 /** Arrival clock position and how many midnights the flight crosses. */
-export function arrivalOf(departureMinute: number, durationMinutes: number): {
+export function arrivalOf(
+  departureMinute: number,
+  durationMinutes: number,
+): {
   arrivalMinute: number;
   dayOffset: number;
 } {

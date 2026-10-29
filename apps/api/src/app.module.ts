@@ -17,6 +17,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
 import { ContentModule } from './modules/content/content.module';
 import { DestinationsModule } from './modules/destinations/destinations.module';
 import { HealthModule } from './modules/health/health.module';
+import { FlightsModule } from './modules/flights/flights.module';
 import { HotelsModule } from './modules/hotels/hotels.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -48,6 +49,7 @@ import { UsersModule } from './modules/users/users.module';
     DestinationsModule,
     AvailabilityModule,
     HotelsModule,
+    FlightsModule,
     BookingsModule,
     AdminModule,
   ],

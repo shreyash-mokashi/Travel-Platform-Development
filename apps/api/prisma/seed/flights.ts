@@ -74,12 +74,54 @@ export const AIRLINES = [
 ] as const;
 
 export const AIRPORTS = [
-  { iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International', city: 'Mumbai', slug: 'mumbai', latitude: 19.0896, longitude: 72.8656 },
-  { iata: 'PNQ', name: 'Pune Airport', city: 'Pune', slug: 'pune', latitude: 18.5793, longitude: 73.9089 },
-  { iata: 'GOI', name: 'Goa Dabolim', city: 'Goa', slug: 'goa', latitude: 15.3808, longitude: 73.8314 },
-  { iata: 'BLR', name: 'Kempegowda International', city: 'Bengaluru', slug: 'bengaluru', latitude: 13.1989, longitude: 77.7068 },
-  { iata: 'DEL', name: 'Indira Gandhi International', city: 'New Delhi', slug: 'new-delhi', latitude: 28.5562, longitude: 77.1 },
-  { iata: 'JAI', name: 'Jaipur International', city: 'Jaipur', slug: 'jaipur', latitude: 26.8242, longitude: 75.8122 },
+  {
+    iata: 'BOM',
+    name: 'Chhatrapati Shivaji Maharaj International',
+    city: 'Mumbai',
+    slug: 'mumbai',
+    latitude: 19.0896,
+    longitude: 72.8656,
+  },
+  {
+    iata: 'PNQ',
+    name: 'Pune Airport',
+    city: 'Pune',
+    slug: 'pune',
+    latitude: 18.5793,
+    longitude: 73.9089,
+  },
+  {
+    iata: 'GOI',
+    name: 'Goa Dabolim',
+    city: 'Goa',
+    slug: 'goa',
+    latitude: 15.3808,
+    longitude: 73.8314,
+  },
+  {
+    iata: 'BLR',
+    name: 'Kempegowda International',
+    city: 'Bengaluru',
+    slug: 'bengaluru',
+    latitude: 13.1989,
+    longitude: 77.7068,
+  },
+  {
+    iata: 'DEL',
+    name: 'Indira Gandhi International',
+    city: 'New Delhi',
+    slug: 'new-delhi',
+    latitude: 28.5562,
+    longitude: 77.1,
+  },
+  {
+    iata: 'JAI',
+    name: 'Jaipur International',
+    city: 'Jaipur',
+    slug: 'jaipur',
+    latitude: 26.8242,
+    longitude: 75.8122,
+  },
 ] as const;
 
 /**
@@ -241,29 +283,36 @@ export async function seedFlights(
             : []),
         ];
 
+        const fareRows: Array<{ id: string; seats: () => number }> = [];
         for (const fare of fares) {
           const { seats, ...fareData } = fare;
           const fareRow = await prisma.fareClass.create({
             data: { ...fareData, flightId: flight.id },
           });
           fareClasses += 1;
+          fareRows.push({ id: fareRow.id, seats });
+        }
 
-          for (let dayOffset = 1; dayOffset <= inventoryDays; dayOffset += 1) {
-            const date = addDays(toIso(start), dayOffset);
-            const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-            const weekendBump = weekday === 5 || weekday === 6 || weekday === 0 ? 1.18 : 1;
-            const wobble = 0.92 + random.next() * 0.2;
-            const demandRamp = 1 + Math.max(0, (45 - dayOffset) / 45) * 0.35;
-            const perSeatRupees = Math.round(
-              random.int(route.fare[0], route.fare[1]) * weekendBump * wobble * demandRamp,
-            );
+        // One base fare per flight-date, shared by every fare family: Flexi
+        // and Business must always price above Saver via their supplements,
+        // never undercut it through an independent random draw.
+        for (let dayOffset = 1; dayOffset <= inventoryDays; dayOffset += 1) {
+          const date = addDays(toIso(start), dayOffset);
+          const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+          const weekendBump = weekday === 5 || weekday === 6 || weekday === 0 ? 1.18 : 1;
+          const wobble = 0.92 + random.next() * 0.2;
+          const demandRamp = 1 + Math.max(0, (45 - dayOffset) / 45) * 0.35;
+          const perSeatRupees = Math.round(
+            random.int(route.fare[0], route.fare[1]) * weekendBump * wobble * demandRamp,
+          );
+
+          for (const fareRow of fareRows) {
             const soldOut = random.next() < 0.02;
-
             inventory.push({
               flightId: flight.id,
               fareClassId: fareRow.id,
               date: new Date(`${date}T00:00:00Z`),
-              seatsOpen: soldOut ? 0 : seats(),
+              seatsOpen: soldOut ? 0 : fareRow.seats(),
               baseFareMinor: toMinorUnits(perSeatRupees),
             });
           }
