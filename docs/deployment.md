@@ -115,6 +115,24 @@ The seed **truncates every table**. Run it once, before sharing the link, and ne
 database holding bookings you care about. Leaving the two password variables unset generates
 random ones and prints them once — record them, they cannot be recovered.
 
+### Adding a new service to a database already in use
+
+When a later migration introduces a service, the new tables arrive empty and `db:seed` is the
+wrong tool — it would wipe the bookings people have already made. Migrate, then run the
+service's own additive seeder. For flights:
+
+```bash
+DATABASE_URL="<neon direct url>" \
+DIRECT_URL="<neon direct url>" \
+  pnpm --filter @voyago/api exec prisma migrate deploy
+
+# Clears and rebuilds only the flight tables. Hotels, users, existing hotel
+# bookings and Mongo content are untouched.
+DATABASE_URL="<neon direct url>" \
+DIRECT_URL="<neon direct url>" \
+  pnpm --filter @voyago/api db:seed:flights
+```
+
 ## 4. Deploy the API to Vercel
 
 A **second** Vercel project, from the same repository.

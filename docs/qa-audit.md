@@ -1,5 +1,11 @@
 # QA audit — hotel booking service
 
+> Scope note: this report records the hardening pass on the **hotel** service
+> (29 October 2026). The flight service shipped afterwards on the same core and
+> is covered by its own 16 integration tests, 4 Playwright tests and a flight
+> section in the shared audit harness — see the "Flights" note in §1 and
+> `tasks.md` Phase L.
+
 Date: 29 October 2026. Auditor: automated + exploratory pass driven end to end against the
 running application and its databases. Every result below was produced by actually executing
 the check; nothing is inferred.
@@ -18,7 +24,16 @@ the check; nothing is inferred.
   mass-assignment probes on every write endpoint, search parameter abuse, quote integrity
   (price recheck, cross-hotel id mixing, malformed UUIDs), booking authorization, payment
   idempotency and state transitions, cancellation policy, admin RBAC and validation,
-  security headers and error envelopes. Each run registers throwaway users and books real
+  security headers and error envelopes.
+
+  **Flights** (added with that service, harness now 96 cases): airport listing, search
+  validation (same-airport, past date, oversized party), fare quoting with mass-assignment
+  and malformed-id probes, passenger-count enforcement, `VYF-` booking creation with the
+  total matching the quote, cross-user invisibility, payment confirmation and idempotent
+  replay, fare-rule cancellation and double-cancel rejection. It immediately earned its
+  keep: `adults=9&children=1` passed the per-field DTO limits and threw inside the fare
+  calculation, returning a 500. The availability service now rejects oversized parties with
+  a 400, covered by an integration test. Each run registers throwaway users and books real
   rooms on randomized far-future dates, so it is safe to repeat.
 
 - **Automated suites** (all green at head):

@@ -4,7 +4,9 @@ import { nextStay, openSearchWithResults, searchUrl, waitForResults } from './he
 test.describe('Hotel search and browsing', () => {
   test('searches from the home page and shows results', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /find a place to stay/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /stays and flights/i })).toBeVisible();
+    // The hero is tabbed since flights shipped; hotels is the default panel.
+    await expect(page.getByTestId('search-tab-hotels')).toHaveAttribute('aria-selected', 'true');
 
     const stay = nextStay();
     await page.getByTestId('destination-input').fill('Goa');
