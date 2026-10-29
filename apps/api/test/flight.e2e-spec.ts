@@ -158,6 +158,14 @@ describe('Flight booking journey (e2e)', () => {
         .expect(404);
     });
 
+    it('rejects a party whose total exceeds nine travellers with 400, never 500', async () => {
+      const date = nextDate();
+      await request(server())
+        .get(`${API}/flights/search`)
+        .query({ from: 'BOM', to: 'DEL', date, adults: 9, children: 1 })
+        .expect(400);
+    });
+
     it('lists the six demo airports', async () => {
       const response = await request(server()).get(`${API}/flights/airports`).expect(200);
       expect(response.body).toHaveLength(6);

@@ -41,6 +41,14 @@ type FlightWithRelations = Flight & {
 export class FlightAvailabilityService {
   constructor(private readonly prisma: PrismaService) {}
 
+  assertParty(adults: number, children: number): void {
+    if (adults + children > FLIGHT_SEARCH_LIMITS.MAX_PASSENGERS) {
+      throw new BadRequestException(
+        `At most ${FLIGHT_SEARCH_LIMITS.MAX_PASSENGERS} travellers per booking.`,
+      );
+    }
+  }
+
   assertSearchableDate(date: string): void {
     const today = todayIso();
     if (date <= today) {
@@ -64,6 +72,7 @@ export class FlightAvailabilityService {
     children: number;
   }): Promise<{ origin: Airport; destination: Airport; offers: FlightOfferView[] }> {
     this.assertSearchableDate(args.date);
+    this.assertParty(args.adults, args.children);
 
     const [origin, destination] = await Promise.all([
       this.prisma.airport.findUnique({ where: { iata: args.fromIata.toUpperCase() } }),
@@ -125,6 +134,7 @@ export class FlightAvailabilityService {
     flight: FlightWithRelations;
     fareClass: FareClass & { cancellationPolicy: unknown };
   } | null> {
+    this.assertParty(request.adults, request.children);
     const fare = await this.prisma.fareClass.findUnique({
       where: { id: request.fareClassId },
       include: {

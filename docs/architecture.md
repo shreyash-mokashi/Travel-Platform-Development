@@ -405,11 +405,11 @@ there — the alternative is a flaky suite, which is worse than no suite.
 
 ## 17. What is deliberately absent
 
-| Not built                                  | Why                                                                                     |
-| ------------------------------------------ | --------------------------------------------------------------------------------------- |
-| Real payment integration                   | The brief requires simulation only                                                      |
-| Email or SMS delivery                      | No value in a demo; a confirmation page and voucher serve the purpose                   |
-| A scheduler to expire unpaid bookings      | Expiry is enforced on the next payment attempt; a cron job is a small isolated addition |
-| Redis, message brokers, microservices      | No demonstrated need at this scale                                                      |
-| Multi-currency                             | One documented demo currency is clearer and matches the brief                           |
-| Flights, packages, activities, car rentals | Out of scope for this milestone by design                                               |
+| Not built                             | Why                                                                                                                                                             |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real payment integration              | The brief requires simulation only                                                                                                                              |
+| Email or SMS delivery                 | No value in a demo; a confirmation page and voucher serve the purpose                                                                                           |
+| A scheduler to expire unpaid bookings | Expiry is enforced on the next payment attempt; a cron job is a small isolated addition                                                                         |
+| Redis, message brokers, microservices | No demonstrated need at this scale                                                                                                                              |
+| Multi-currency                        | One documented demo currency is clearer and matches the brief                                                                                                   |
+| Packages, activities, car rentals     | Out of scope for this milestone by design; flights shipped on the shared core (own tables, `VYF-` references, same state machine - see docs/database-design.md) |

@@ -282,3 +282,26 @@ pnpm infra:reset && pnpm db:deploy && pnpm db:seed
 
 This destroys both volumes, recreates the containers, applies every migration from empty, and
 loads the demo dataset.
+
+## Flight tables
+
+The flight service adds its own tables rather than generalising the hotel ones; the shared
+pieces are the enums (`BookingStatus`, `PaymentStatus`, `RefundStatus`, `PaymentScenario`)
+and the `cancellation_policies` table, which fare classes reference exactly as rate plans do.
+
+| Table                          | Purpose                                                                                                                                                                                                     |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `airlines`                     | Fictional carriers (`code` unique).                                                                                                                                                                         |
+| `airports`                     | Six demo airports, each linked to its `destinations` row.                                                                                                                                                   |
+| `flights`                      | A scheduled service: route, departure minute, block time, aircraft, Monday-first `daysOfWeek` bitmask.                                                                                                      |
+| `fare_classes`                 | Saver/Flexi/Business per flight: baggage, meal, supplement/discount basis points, cancellation policy.                                                                                                      |
+| `flight_inventory`             | Per flight-date-fare seats and base fare, `@@unique([flightId, fareClassId, date])`. One base fare per flight-date is shared across its fare families so supplements, never random draws, order the prices. |
+| `flight_quotes`                | Soft seat holds with `expiresAt`/`consumedAt`, mirror of `quotes`.                                                                                                                                          |
+| `flight_bookings`              | `VYF-` references, immutable `flightSnapshot`/`priceSnapshot`/`cancellationPolicySnapshot`, same statuses.                                                                                                  |
+| `flight_passengers`            | One row per traveller, lead flagged.                                                                                                                                                                        |
+| `flight_payment_attempts`      | Idempotency-keyed simulator attempts, mirror of `payment_attempts`.                                                                                                                                         |
+| `flight_booking_status_events` | Append-only state history.                                                                                                                                                                                  |
+| `flight_refunds`               | One simulated refund decision per booking.                                                                                                                                                                  |
+
+Availability for a fare on a date is computed, never stored:
+`sellable = seatsOpen − seats on live quotes − seats on bookings not in (CANCELLED, EXPIRED)`.

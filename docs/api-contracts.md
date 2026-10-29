@@ -357,3 +357,86 @@ Every mutating admin call writes an `AdminAuditLog` entry naming the acting admi
 | `POST /auth/register`, `POST /auth/login` | 30/minute                                                        |
 
 Exceeding a limit returns **429**.
+
+## Flights
+
+The flight service mirrors the hotel contracts: public search and quoting, authenticated
+bookings, the same demo-payment scenarios and error envelope. Flight booking references use
+the `VYF-` prefix (hotels use `VYG-`), so a reference always names its product.
+
+### `GET /flights/airports` — 200
+
+The six demo airports: `[{ iata, name, city }]`.
+
+### `GET /flights/search` — 200
+
+Query: `from`, `to` (IATA), `date` (yyyy-mm-dd, tomorrow..+365), `adults` (1-9),
+`children` (0-8, total party ≤ 9), optional `sort`
+(`departure_asc` default, `price_asc`, `price_desc`, `duration_asc`).
+
+Returns every operating flight on the route-date with its sellable fare families:
+
+```json
+{
+  "searchId": "…",
+  "origin": { "iata": "BOM", "name": "…", "city": "Mumbai" },
+  "destination": { "iata": "DEL", "name": "…", "city": "New Delhi" },
+  "date": "2027-01-15",
+  "adults": 2, "children": 0, "currency": "INR",
+  "items": [{
+    "segment": { "flightId": "…", "airline": { "code": "ZV", "name": "Zephyr Airways" },
+      "flightNumber": "ZV 263", "origin": { … }, "destination": { … },
+      "date": "2027-01-15", "departureMinute": 400, "arrivalMinute": 495,
+      "dayOffset": 0, "durationMinutes": 95, "aircraft": "A320neo" },
+    "fares": [{ "fareClassId": "…", "code": "SAVER", "name": "Saver", "cabin": "ECONOMY",
+      "checkinBaggageKg": 15, "cabinBaggageKg": 7, "mealIncluded": false,
+      "seatSelectionIncluded": false, "seatsLeft": 12, "refundable": false,
+      "cancellationPolicy": { … }, "price": { "lines": [ … ], "totalMinor": 948000, … } }],
+    "leadTotalMinor": 948000
+  }],
+  "total": 3
+}
+```
+
+`seatsLeft` already excludes seats held by live quotes and by bookings that still hold
+inventory. Fares within a flight are sorted cheapest first.
+
+### `POST /flight-quotes` — 201 (public)
+
+Body: `flightId`, `fareClassId`, `date`, `adults`, `children`, optional `expectedTotalMinor`
+(used only to set `priceChanged`). Recomputes the authoritative total server-side and holds
+the seats for 20 minutes. Returns a `FlightQuoteView` with `quoteId`, `expiresAt`, the
+`segment`, the priced `fare`, and `priceChanged`/`previousTotalMinor`.
+
+### `GET /flight-quotes/:id` — 200 (public)
+
+Re-reads and reprices an existing quote. 400 when consumed, expired or malformed; a quote
+created while signed in is invisible to other users (404).
+
+### `POST /flight-bookings` — 201 (auth)
+
+Body: `quoteId`, `contactEmail`, `contactPhone`, `passengers` (exactly one name per quoted
+traveller; the first adult is the lead), `acceptedCancellationPolicy: true`. Consumes the
+quote transactionally, snapshots the segment, fare, price and policy, and answers with a
+`FlightBookingView` in `PENDING_PAYMENT`. Re-posting a consumed quote returns the booking it
+already produced for its owner and 409 for anyone else.
+
+### `GET /flight-bookings` · `GET /flight-bookings/:idOrReference` — 200 (auth)
+
+The signed-in user's flight bookings; a single booking by UUID or `VYF-` reference.
+Other users' bookings are 404, never 403.
+
+### `POST /flight-bookings/:idOrReference/payments` — 201 (auth)
+
+Same body and semantics as hotel payments: `scenario` (`SUCCESS`/`FAILURE`/`PENDING`) plus a
+client `idempotencyKey` whose replay returns the original attempt. Writes
+`flight_payment_attempts`; the state machine and notices are identical.
+
+### `POST /flight-bookings/:idOrReference/payments/resolve` — 200 (auth)
+
+Finishes a deliberately pending demo payment with `outcome: SUCCESS | FAILURE`.
+
+### `POST /flight-bookings/:idOrReference/cancellation` — 200 (auth)
+
+Cancels under the fare's cancellation policy and records a `flight_refunds` row when the
+booking was paid. Unpaid bookings cancel with `refundStatus: NOT_APPLICABLE`.

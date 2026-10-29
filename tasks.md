@@ -144,6 +144,22 @@ Last verified: 29 October 2026.
       action segments excluded - see D9 in `docs/qa-audit.md`)
 - [x] Full regression at head: 38 + 31 unit, 59 integration, 40 Playwright, 80 harness
 
+## Phase L — Flight service (29 October 2026)
+
+- [x] Ten flight tables mirroring the hotel patterns (quotes, bookings, payments, refunds,
+      status events) on the shared enums and cancellation policies; migration applied
+- [x] Shared fare engine: computeFarePrice (5%/12% demo GST by cabin, exact-sum lines),
+      schedule helpers, view types - 8 unit tests
+- [x] Seeded a fictional 48-flight network: 4 airlines, 6 airports, 124 fare classes,
+      ~30k per-date inventory rows, one shared base fare per flight-date
+- [x] API: /flights/search + airports, /flight-quotes (20-minute seat holds, recheck),
+      /flight-bookings (VYF refs, snapshots, passenger-count enforcement), payment simulator
+      twin, fare-rule cancellation - 16 integration tests
+- [x] Web: home Hotels/Flights tabs, results with fare families, passenger checkout, shared
+      payment/detail/e-ticket/cancellation surfaces routed by reference prefix, merged
+      bookings list - 4 Playwright tests
+- [x] Harness extended to 96 cases; caught and fixed a party-size 500
+
 ## Outstanding, and why
 
 | Item                                | Status    | Blocker                                                                               |

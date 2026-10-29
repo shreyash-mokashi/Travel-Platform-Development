@@ -357,6 +357,13 @@ async function main() {
     r = await call('GET', `/admin/bookings/${booking?.reference}`, { token: ta });
     check(id('ADM'), 'admin can inspect any booking', r.status === 200, `status=${r.status}`);
 
+    // Seed one legitimate admin change so the audit assertion does not
+    // depend on leftover state from previous runs.
+    const seedHotel = (await call('GET', '/admin/hotels', { token: ta })).json?.items?.[0];
+    if (seedHotel) {
+      await call('PATCH', `/admin/hotels/${seedHotel.id}`, { token: ta, body: { isActive: true } });
+    }
+
     r = await call('GET', '/admin/audit', { token: ta });
     const auditLen = r.json?.items?.length ?? r.json?.data?.length ?? (Array.isArray(r.json) ? r.json.length : 0);
     check(id('ADM'), 'audit log readable and non-empty', r.status === 200 && auditLen > 0, `status=${r.status} len=${auditLen} keys=${Object.keys(r.json ?? {})}`);
@@ -389,6 +396,91 @@ async function main() {
   check(id('MISC'), 'helmet security headers present',
     h.get('x-content-type-options') === 'nosniff' && !!h.get('content-security-policy') || h.get('x-dns-prefetch-control') !== null,
     `xcto=${h.get('x-content-type-options')}`);
+
+  // ---------------------------------------------------------------- FLIGHTS
+  r = await call('GET', '/flights/airports', {});
+  check(id('FLT'), 'six demo airports listed', r.status === 200 && r.json?.length === 6, `status=${r.status}`);
+
+  const fdate = dates(60 + Math.floor(Math.random() * 120)).checkIn;
+  r = await call('GET', `/flights/search?from=BOM&to=DEL&date=${fdate}&adults=2`, {});
+  const flightItems = r.json?.items ?? [];
+  check(id('FLT'), 'flight search returns operating flights with fares',
+    r.status === 200 && flightItems.length > 0 && flightItems[0]?.fares?.length > 0, `status=${r.status}`);
+
+  r = await call('GET', `/flights/search?from=BOM&to=BOM&date=${fdate}&adults=1`, {});
+  check(id('FLT'), 'same-airport search rejected', r.status === 400, `status=${r.status}`);
+
+  r = await call('GET', `/flights/search?from=BOM&to=DEL&date=2020-01-01&adults=1`, {});
+  check(id('FLT'), 'past-date flight search rejected', r.status === 400, `status=${r.status}`);
+
+  r = await call('GET', `/flights/search?from=BOM&to=DEL&date=${fdate}&adults=9&children=1`, {});
+  check(id('FLT'), 'oversized party rejected', r.status === 400, `status=${r.status}`);
+
+  const fOffer = flightItems[0];
+  const fFare = fOffer?.fares?.find((candidate) => candidate.seatsLeft >= 2) ?? fOffer?.fares?.[0];
+  let fQuote = null;
+  if (fOffer && fFare) {
+    r = await call('POST', '/flight-quotes', { body: {
+      flightId: fOffer.segment.flightId, fareClassId: fFare.fareClassId,
+      date: fdate, adults: 2, children: 0, expectedTotalMinor: fFare.price.totalMinor,
+    } });
+    fQuote = r.json;
+    check(id('FLT'), 'fare quote created without a price change',
+      r.status === 201 && fQuote?.quoteId && fQuote?.priceChanged === false, `status=${r.status}`);
+
+    r = await call('POST', '/flight-quotes', { body: {
+      flightId: fOffer.segment.flightId, fareClassId: fFare.fareClassId,
+      date: fdate, adults: 2, children: 0, status: 'CONSUMED',
+    } });
+    check(id('FLT'), 'mass assignment on fare quote rejected', r.status === 400, `status=${r.status}`);
+  } else {
+    record(false, id('FLT'), 'no sellable fare found to quote');
+  }
+
+  r = await call('GET', '/flight-quotes/not-a-uuid', {});
+  check(id('FLT'), 'malformed fare-quote id is 400, never 500', r.status === 400, `status=${r.status}`);
+
+  const fBody = (quoteId, extraPassenger = false) => ({
+    quoteId, contactEmail: u1.email, contactPhone: '+91 98200 12345',
+    passengers: [
+      { firstName: 'Lead', lastName: 'Flyer', isLeadPassenger: true },
+      { firstName: 'Second', lastName: 'Flyer' },
+      ...(extraPassenger ? [{ firstName: 'Extra', lastName: 'Flyer' }] : []),
+    ],
+    acceptedCancellationPolicy: true,
+  });
+
+  r = await call('POST', '/flight-bookings', { body: fBody(fQuote?.quoteId) });
+  check(id('FLT'), 'flight booking without auth is 401', r.status === 401, `status=${r.status}`);
+
+  r = await call('POST', '/flight-bookings', { token: t1, body: fBody(fQuote?.quoteId, true) });
+  check(id('FLT'), 'passenger count must match the quoted party', r.status === 400, `status=${r.status}`);
+
+  r = await call('POST', '/flight-bookings', { token: t1, body: fBody(fQuote?.quoteId) });
+  const fBooking = r.json;
+  check(id('FLT'), 'flight booking created with a VYF reference',
+    r.status === 201 && /^VYF-/.test(fBooking?.reference ?? '') && fBooking?.totalMinor === fQuote?.fare?.price?.totalMinor,
+    `status=${r.status} ref=${fBooking?.reference}`);
+
+  r = await call('GET', `/flight-bookings/${fBooking?.reference}`, { token: t2 });
+  check(id('FLT'), "another user's flight booking is invisible", r.status === 404, `status=${r.status}`);
+
+  const fKey = `fqa-${stamp}`;
+  r = await call('POST', `/flight-bookings/${fBooking?.reference}/payments`, { token: t1, body: { scenario: 'SUCCESS', idempotencyKey: fKey } });
+  const fPaid = r.json;
+  check(id('FLT'), 'flight demo payment confirms the booking',
+    (r.status === 201 || r.status === 200) && /CONFIRMED/.test(fPaid?.booking?.status ?? ''), `status=${r.status}`);
+
+  r = await call('POST', `/flight-bookings/${fBooking?.reference}/payments`, { token: t1, body: { scenario: 'SUCCESS', idempotencyKey: fKey } });
+  check(id('FLT'), 'flight payment replay returns the original attempt',
+    (r.json?.attempt?.id ?? null) === (fPaid?.attempt?.id ?? undefined), `replay=${r.json?.attempt?.id}`);
+
+  r = await call('POST', `/flight-bookings/${fBooking?.reference}/cancellation`, { token: t1, body: { reason: 'QA audit' } });
+  check(id('FLT'), 'flight cancellation follows fare rules',
+    (r.status === 200 || r.status === 201) && /CANCELLED/.test(r.json?.status ?? ''), `status=${r.status}`);
+
+  r = await call('POST', `/flight-bookings/${fBooking?.reference}/cancellation`, { token: t1, body: {} });
+  check(id('FLT'), 'double flight cancellation rejected', r.status === 409, `status=${r.status}`);
 
   // ------------------------------------------------------------------ DONE
   const failed = results.filter((x) => !x.ok);

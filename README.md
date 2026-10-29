@@ -1,12 +1,13 @@
 # Voyago
 
-A portfolio-grade online travel booking platform. The **hotel booking service is complete end
-to end** — search, filtering, hotel detail, server-side price recheck, persisted bookings, a
-demo payment simulator, vouchers, and policy-driven cancellation and refund simulation — on an
-architecture designed so flights, packages, activities and car rentals can be added without a
-rewrite.
+A portfolio-grade online travel booking platform. The **hotel and flight booking services are
+complete end to end** — search, fare/rate selection, server-side price recheck, persisted
+bookings, a demo payment simulator, vouchers and e-tickets, and policy-driven cancellation and
+refund simulation — on an architecture designed so packages, activities and car rentals can be
+added without a rewrite. The flight service was added exactly that way: its own tables and
+modules on the shared state machine, payments and policy engine.
 
-> **This is a demonstration project.** All hotel inventory is seeded sample data and does not
+> **This is a demonstration project.** All hotel and flight inventory is seeded sample data (every airline is fictional) and does not
 > represent real properties or live supplier availability. All payments and refunds are
 > simulated: no payment gateway is contacted, no card details are ever collected, and no money
 > moves.
