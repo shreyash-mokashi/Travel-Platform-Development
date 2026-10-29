@@ -19,6 +19,7 @@ import {
   ROOM_TEMPLATES,
 } from './seed/catalogue';
 import { DESTINATIONS } from './seed/destinations';
+import { FLIGHT_CANCELLATION_POLICIES, seedFlights } from './seed/flights';
 import { DESTINATION_CONTENT } from './seed/content';
 import { imageUrl } from './seed/images';
 import { createRandom } from './seed/random';
@@ -39,8 +40,11 @@ async function resetPostgres(): Promise<void> {
     TRUNCATE TABLE
       admin_audit_logs, refunds, booking_status_events, payment_attempts,
       booking_guests, bookings, quotes, room_inventory, rate_plans,
-      room_images, rooms, hotel_images, hotels, destinations,
-      cancellation_policies, refresh_tokens, users
+      room_images, rooms, hotel_images, hotels,
+      flight_refunds, flight_booking_status_events, flight_payment_attempts,
+      flight_passengers, flight_bookings, flight_quotes, flight_inventory,
+      fare_classes, flights, airports, airlines,
+      destinations, cancellation_policies, refresh_tokens, users
     RESTART IDENTITY CASCADE
   `);
 }
@@ -88,7 +92,7 @@ async function seedUsers(): Promise<{ customer: string; admin: string }> {
 
 async function seedPolicies(): Promise<Map<string, string>> {
   const ids = new Map<string, string>();
-  for (const policy of CANCELLATION_POLICIES) {
+  for (const policy of [...CANCELLATION_POLICIES, ...FLIGHT_CANCELLATION_POLICIES]) {
     const row = await prisma.cancellationPolicy.create({
       data: {
         code: policy.code,
@@ -294,6 +298,13 @@ async function main(): Promise<void> {
   );
 
   const contentCount = await seedMongo();
+  const flightCounts = await seedFlights(prisma, policyIds, INVENTORY_DAYS);
+  console.log(
+    `  - created ${flightCounts.airlines} airlines, ${flightCounts.airports} airports, ` +
+      `${flightCounts.flights} flights, ${flightCounts.fareClasses} fare classes, ` +
+      `${flightCounts.inventoryRows} flight inventory rows`,
+  );
+
   console.log(`  - seeded ${contentCount} MongoDB destination content documents`);
 
   console.log('\nDemo accounts (local development only):');
