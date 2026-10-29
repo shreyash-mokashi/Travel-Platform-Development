@@ -174,7 +174,9 @@ export function SearchFilters({
                   data-testid={`filter-star-${entry.value}`}
                 />
                 <span className="flex-1 text-ink-soft">{entry.value} star</span>
-                <span aria-hidden="true" className="text-xs text-ink-muted">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-muted">
+                  {entry.count}
+                </span>
                 <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
@@ -225,7 +227,9 @@ export function SearchFilters({
                 <span className="flex-1 text-ink-soft">
                   {MEAL_PLAN_LABEL[entry.value as MealPlan]}
                 </span>
-                <span aria-hidden="true" className="text-xs text-ink-muted">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-muted">
+                  {entry.count}
+                </span>
                 <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
@@ -249,7 +253,9 @@ export function SearchFilters({
                   data-testid={`filter-amenity-${entry.code}`}
                 />
                 <span className="flex-1 text-ink-soft">{entry.label}</span>
-                <span aria-hidden="true" className="text-xs text-ink-muted">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-muted">
+                  {entry.count}
+                </span>
                 <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}

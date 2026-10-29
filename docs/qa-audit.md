@@ -22,13 +22,14 @@ the check; nothing is inferred.
   rooms on randomized far-future dates, so it is safe to repeat.
 
 - **Automated suites** (all green at head):
-  | Suite | Count | Command |
-  |---|---|---|
-  | Shared/API unit (Jest) | 38 | `pnpm --filter @voyago/api test` |
-  | Web unit (Jest) | 31 | `pnpm --filter @voyago/web test` |
-  | API integration (Supertest, real DBs) | 59 | `pnpm --filter @voyago/api test:e2e` |
-  | Browser e2e (Playwright, desktop + Pixel 7) | 38 | `SEED_DEMO_ADMIN_PASSWORD=... npx playwright test` |
-  | Adversarial API audit | 80 | `node scripts/qa-api-audit.mjs` |
+
+  | Suite                                       | Count | Command                                            |
+  | ------------------------------------------- | ----- | -------------------------------------------------- |
+  | Shared/API unit (Jest)                      | 38    | `pnpm --filter @voyago/api test`                   |
+  | Web unit (Jest)                             | 31    | `pnpm --filter @voyago/web test`                   |
+  | API integration (Supertest, real DBs)       | 59    | `pnpm --filter @voyago/api test:e2e`               |
+  | Browser e2e (Playwright, desktop + Pixel 7) | 38    | `SEED_DEMO_ADMIN_PASSWORD=... npx playwright test` |
+  | Adversarial API audit                       | 80    | `node scripts/qa-api-audit.mjs`                    |
 
   Five of the seven admin e2e tests skip without `SEED_DEMO_ADMIN_PASSWORD` (the suite cannot know a
   generated password); they were executed with it and pass.
@@ -49,20 +50,20 @@ the check; nothing is inferred.
 
 ## 2. Defects found and fixed
 
-| # | Severity | Defect | Root cause | Fix | Regression test |
-|---|---|---|---|---|---|
-| D1 | High (security) | `PATCH /api/v1/admin/hotels/:id` accepted any payload — `starRating: 11` persisted to the database | `@Body() dto: Partial<UpsertHotelDto>`: a bare TypeScript `Partial<>` is erased at runtime, so class-validator saw no rules and the whitelist could not strip fields | `UpdateHotelDto extends PartialType(UpsertHotelDto)` keeps every validator with optional fields | Audit cases ADM `starRating: 11` → 400, unknown field → 400 |
-| D2 | — (data) | The D1 probe left an 11-star hotel in the local database | Consequence of D1 | Row restored to its seeded 4-star value and verified in the admin UI | — |
-| D3 | High | `GET /quotes/:id`, quote creation and booking creation returned **HTTP 500** for malformed (non-UUID) ids | Prisma error `P2023` was unmapped in the global exception filter and ids were validated only as strings | `@IsUUID()` on all id fields, `ParseUUIDPipe` on `:id` params (quotes + all admin routes), and a `P2023 → 400` mapping in the filter as a safety net | Integration: three malformed-id cases expect 400; audit QT/ADM cases |
-| D4 | Medium | Money rendered as `₹16,194.5` — one decimal digit — on every per-night price | `formatMoney` allowed 0–2 fraction digits, and per-night values rounded to whole paise are frequently half-rupees | Whole amounts render with no decimals, fractional with exactly two; additionally per-night prices are now rounded to whole rupees server-side (`roundToMajorUnit`), the way travel sites quote them | Unit: `formatMoney` fraction cases |
-| D5 | Medium | The printable check-in **voucher rendered for unpaid bookings** (payment failed/pending), and every booking page linked to it | No status gate on the voucher route or the link | Both gated to `CONFIRMED`/`CANCELLATION_REQUESTED`; the voucher URL shows an explanatory empty state otherwise | Playwright: failure-path test asserts no link and a refusal at the URL |
-| D6 | Low (a11y) | 18 filter checkboxes, the price slider and the sort select had no `id`/`name` (DevTools issue, breaks autofill/form semantics); facet counts were announced glued to the label (“5 star1”) | Markup gaps | Stable ids/names derived from the facet value; counts `aria-hidden` with a screen-reader `… properties` alternative | Lighthouse re-audit |
-| D7 | Low (a11y) | `aria-label` on a `<span>` with no role (star rating) — prohibited ARIA; muted text at 4.28:1 contrast (needs 4.5); hotel-card headings skipped h1→h3 | Token `ink.muted #627D98` too light at 12px; missing `role="img"`; wrong heading level | `role="img"` on the rating, `ink.muted → #56708C` (5.1:1 white / 4.9:1 warm), card heading h3→h2 | Lighthouse re-audit |
-| D8 | Low | No favicon — every page load 404ed on `/favicon.ico` (visible in prod logs) | Asset never created | `apps/web/src/app/icon.svg` brand mark | `curl /icon.svg` → 200 |
+| #   | Severity        | Defect                                                                                                                                                                                     | Root cause                                                                                                                                                           | Fix                                                                                                                                                                                                 | Regression test                                                        |
+| --- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| D1  | High (security) | `PATCH /api/v1/admin/hotels/:id` accepted any payload — `starRating: 11` persisted to the database                                                                                         | `@Body() dto: Partial<UpsertHotelDto>`: a bare TypeScript `Partial<>` is erased at runtime, so class-validator saw no rules and the whitelist could not strip fields | `UpdateHotelDto extends PartialType(UpsertHotelDto)` keeps every validator with optional fields                                                                                                     | Audit cases ADM `starRating: 11` → 400, unknown field → 400            |
+| D2  | — (data)        | The D1 probe left an 11-star hotel in the local database                                                                                                                                   | Consequence of D1                                                                                                                                                    | Row restored to its seeded 4-star value and verified in the admin UI                                                                                                                                | —                                                                      |
+| D3  | High            | `GET /quotes/:id`, quote creation and booking creation returned **HTTP 500** for malformed (non-UUID) ids                                                                                  | Prisma error `P2023` was unmapped in the global exception filter and ids were validated only as strings                                                              | `@IsUUID()` on all id fields, `ParseUUIDPipe` on `:id` params (quotes + all admin routes), and a `P2023 → 400` mapping in the filter as a safety net                                                | Integration: three malformed-id cases expect 400; audit QT/ADM cases   |
+| D4  | Medium          | Money rendered as `₹16,194.5` — one decimal digit — on every per-night price                                                                                                               | `formatMoney` allowed 0–2 fraction digits, and per-night values rounded to whole paise are frequently half-rupees                                                    | Whole amounts render with no decimals, fractional with exactly two; additionally per-night prices are now rounded to whole rupees server-side (`roundToMajorUnit`), the way travel sites quote them | Unit: `formatMoney` fraction cases                                     |
+| D5  | Medium          | The printable check-in **voucher rendered for unpaid bookings** (payment failed/pending), and every booking page linked to it                                                              | No status gate on the voucher route or the link                                                                                                                      | Both gated to `CONFIRMED`/`CANCELLATION_REQUESTED`; the voucher URL shows an explanatory empty state otherwise                                                                                      | Playwright: failure-path test asserts no link and a refusal at the URL |
+| D6  | Low (a11y)      | 18 filter checkboxes, the price slider and the sort select had no `id`/`name` (DevTools issue, breaks autofill/form semantics); facet counts were announced glued to the label (“5 star1”) | Markup gaps                                                                                                                                                          | Stable ids/names derived from the facet value; counts `aria-hidden` with a screen-reader `… properties` alternative                                                                                 | Lighthouse re-audit                                                    |
+| D7  | Low (a11y)      | `aria-label` on a `<span>` with no role (star rating) — prohibited ARIA; muted text at 4.28:1 contrast (needs 4.5); hotel-card headings skipped h1→h3                                      | Token `ink.muted #627D98` too light at 12px; missing `role="img"`; wrong heading level                                                                               | `role="img"` on the rating, `ink.muted → #56708C` (5.1:1 white / 4.9:1 warm), card heading h3→h2                                                                                                    | Lighthouse re-audit                                                    |
+| D8  | Low             | No favicon — every page load 404ed on `/favicon.ico` (visible in prod logs)                                                                                                                | Asset never created                                                                                                                                                  | `apps/web/src/app/icon.svg` brand mark                                                                                                                                                              | `curl /icon.svg` → 200                                                 |
 
 **Investigated, not defects:**
 
-- Re-POSTing a consumed quote returns HTTP 201 with the *same* booking for its owner —
+- Re-POSTing a consumed quote returns HTTP 201 with the _same_ booking for its owner —
   deliberate idempotency for double-submits (`bookings.service.ts`); a different user gets 409.
   The audit now asserts “same reference, no duplicate” instead of expecting a rejection.
 - The admin inventory editor appeared to give no feedback after applying a change; in fact the
@@ -135,11 +136,11 @@ profile-update and cancel actions have the same revalidate-then-return shape.
 
 ## 5. Lighthouse (mobile, search results)
 
-| Category | Before | After |
-|---|---|---|
-| Accessibility | 91 | **100** |
-| Best practices | 100 | 100 |
-| SEO | 60 | 60 |
+| Category       | Before | After   |
+| -------------- | ------ | ------- |
+| Accessibility  | 91     | **100** |
+| Best practices | 100    | 100     |
+| SEO            | 60     | 60      |
 
 Reaching 100 also required demoting `ink-faint` (#9FB3C8, 2.15:1 on white) to the dark
 footer where it belongs: all 27 light-background usages now use the AA-compliant `ink-muted`.

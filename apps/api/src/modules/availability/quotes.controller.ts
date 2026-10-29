@@ -24,7 +24,10 @@ export class QuotesController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Re-read and reprice an existing quote' })
-  get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @CurrentUser() user?: RequestUser) {
+  get(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @CurrentUser() user?: RequestUser,
+  ) {
     return this.quotes.get(id, user?.id);
   }
 }

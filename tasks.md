@@ -146,9 +146,9 @@ Last verified: 29 October 2026.
 
 ## Outstanding, and why
 
-| Item                                | Status                                   | Blocker                                                                               |
-| ----------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| Scheduled expiry of unpaid bookings | Not built                                | Enforced on the next payment attempt instead; a cron job is a small isolated addition |
+| Item                                | Status    | Blocker                                                                               |
+| ----------------------------------- | --------- | ------------------------------------------------------------------------------------- |
+| Scheduled expiry of unpaid bookings | Not built | Enforced on the next payment attempt instead; a cron job is a small isolated addition |
 
 ## Deliberately out of scope
 

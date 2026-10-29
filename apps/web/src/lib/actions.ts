@@ -209,4 +209,3 @@ export async function resolvePendingPaymentAction(
   revalidatePath(`/bookings/${reference}`);
   redirect(`/bookings/${reference}`);
 }
-
