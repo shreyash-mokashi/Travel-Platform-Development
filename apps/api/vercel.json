@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "installCommand": "corepack enable && pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @voyago/shared build && pnpm --filter @voyago/api exec prisma generate && pnpm --filter @voyago/api build",
   "outputDirectory": "public",
@@ -9,5 +10,7 @@
       "includeFiles": "dist/**"
     }
   },
-  "github": { "silent": true }
+  "github": {
+    "silent": true
+  }
 }
