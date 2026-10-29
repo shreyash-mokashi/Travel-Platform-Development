@@ -11,6 +11,11 @@ rewrite.
 > simulated: no payment gateway is contacted, no card details are ever collected, and no money
 > moves.
 
+**Live demo:** [travel-platform-development-orcin.vercel.app](https://travel-platform-development-orcin.vercel.app)
+· API: [voyago-api-rose.vercel.app/api/v1/health](https://voyago-api-rose.vercel.app/api/v1/health)
+— both run on free serverless tiers (Vercel + Neon + MongoDB Atlas), so the first request
+after a quiet period can take a few seconds while the functions and databases wake up.
+
 ---
 
 ## Contents
