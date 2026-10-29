@@ -101,6 +101,13 @@ test.describe('Hotel booking journey', () => {
     await page.waitForURL(/\/bookings\/VYG-/);
     await expect(page.getByText('The demo payment did not go through')).toBeVisible();
 
+    // An unpaid booking must not offer a check-in voucher, and the voucher
+    // URL itself refuses to render one.
+    await expect(page.getByRole('link', { name: 'View voucher' })).toHaveCount(0);
+    await page.goto(`/bookings/${reference}/voucher`);
+    await expect(page.getByText('Voucher not available yet')).toBeVisible();
+    await page.goBack();
+
     await page.getByRole('link', { name: 'Retry payment' }).click();
     await page.waitForURL(/\/checkout\/payment\//);
     await runDemoPayment(page, 'SUCCESS');

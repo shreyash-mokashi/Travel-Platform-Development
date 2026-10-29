@@ -32,7 +32,9 @@ export function SortSelect({ value }: { value: HotelSortOption }) {
         }}
         className="rounded-lg border border-sand-300 bg-white px-3 py-1.5 text-sm font-medium text-ink focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
         data-testid="sort-select"
-        aria-label="Sort results"
+        id="sort-results"
+      name="sort-results"
+      aria-label="Sort results"
       >
         {HOTEL_SORT_OPTIONS.map((option) => (
           <option key={option} value={option}>

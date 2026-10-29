@@ -39,6 +39,14 @@ describe('money helpers', () => {
   it('formats INR for an Indian audience', () => {
     expect(formatMoney(4_993_800)).toContain('49,938');
   });
+
+  it('formats whole amounts without decimals and fractional ones with exactly two', () => {
+    // Per-night prices are rounded to whole paise, so half-rupee amounts are
+    // common; "₹16,194.5" must never appear.
+    expect(formatMoney(813_300)).not.toMatch(/\./);
+    expect(formatMoney(1_619_450)).toMatch(/16,194\.50$/);
+    expect(formatMoney(1_619_455)).toMatch(/16,194\.55$/);
+  });
 });
 
 describe('resolveTaxBasisPoints', () => {

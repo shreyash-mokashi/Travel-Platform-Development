@@ -146,6 +146,8 @@ export function SearchFilters({
             value={maxPrice}
             onChange={(event) => setMaxPrice(Number(event.target.value))}
             className="w-full accent-brand-600"
+            id="filter-max-price"
+            name="filter-max-price"
             aria-label="Maximum total price"
             data-testid="price-slider"
           />
@@ -164,13 +166,16 @@ export function SearchFilters({
               <label key={entry.value} className="flex cursor-pointer items-center gap-2.5 text-sm">
                 <input
                   type="checkbox"
+                  id={`filter-star-${entry.value}`}
+                  name={`filter-star-${entry.value}`}
                   checked={current('starRatings').includes(String(entry.value))}
                   onChange={() => toggleMulti('starRatings', String(entry.value))}
                   className="h-4 w-4 rounded border-sand-300 text-brand-600 focus:ring-brand-500"
                   data-testid={`filter-star-${entry.value}`}
                 />
                 <span className="flex-1 text-ink-soft">{entry.value} star</span>
-                <span className="text-xs text-ink-faint">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-faint">{entry.count}</span>
+                <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
           </div>
@@ -182,6 +187,8 @@ export function SearchFilters({
         <label className="flex cursor-pointer items-center gap-2.5 text-sm">
           <input
             type="checkbox"
+            id="filter-free-cancellation"
+            name="filter-free-cancellation"
             checked={active.get('freeCancellation') === 'true'}
             onChange={() =>
               apply((params) => {
@@ -193,7 +200,10 @@ export function SearchFilters({
             data-testid="filter-free-cancellation"
           />
           <span className="flex-1 text-ink-soft">Free cancellation available</span>
-          <span className="text-xs text-ink-faint">{facets.freeCancellationCount}</span>
+          <span aria-hidden="true" className="text-xs text-ink-faint">
+            {facets.freeCancellationCount}
+          </span>
+          <span className="sr-only">{facets.freeCancellationCount} properties</span>
         </label>
       </fieldset>
 
@@ -205,6 +215,8 @@ export function SearchFilters({
               <label key={entry.value} className="flex cursor-pointer items-center gap-2.5 text-sm">
                 <input
                   type="checkbox"
+                  id={`filter-meal-${entry.value}`}
+                  name={`filter-meal-${entry.value}`}
                   checked={current('mealPlans').includes(entry.value)}
                   onChange={() => toggleMulti('mealPlans', entry.value)}
                   className="h-4 w-4 rounded border-sand-300 text-brand-600 focus:ring-brand-500"
@@ -213,7 +225,8 @@ export function SearchFilters({
                 <span className="flex-1 text-ink-soft">
                   {MEAL_PLAN_LABEL[entry.value as MealPlan]}
                 </span>
-                <span className="text-xs text-ink-faint">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-faint">{entry.count}</span>
+                <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
           </div>
@@ -228,13 +241,16 @@ export function SearchFilters({
               <label key={entry.code} className="flex cursor-pointer items-center gap-2.5 text-sm">
                 <input
                   type="checkbox"
+                  id={`filter-amenity-${entry.code}`}
+                  name={`filter-amenity-${entry.code}`}
                   checked={current('amenities').includes(entry.code)}
                   onChange={() => toggleMulti('amenities', entry.code)}
                   className="h-4 w-4 rounded border-sand-300 text-brand-600 focus:ring-brand-500"
                   data-testid={`filter-amenity-${entry.code}`}
                 />
                 <span className="flex-1 text-ink-soft">{entry.label}</span>
-                <span className="text-xs text-ink-faint">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-faint">{entry.count}</span>
+                <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
           </div>

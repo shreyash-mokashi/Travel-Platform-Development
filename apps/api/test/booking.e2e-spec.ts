@@ -204,6 +204,37 @@ describe('Booking journey (e2e)', () => {
         })
         .expect(400);
     });
+
+    it('rejects malformed (non-UUID) identifiers with 400, never 500', async () => {
+      await request(server()).get(`${API}/quotes/not-a-uuid`).expect(400);
+
+      const window = nextStay();
+      await request(server())
+        .post(`${API}/quotes`)
+        .send({
+          hotelId: 'garbage',
+          roomId: 'garbage',
+          ratePlanId: 'garbage',
+          checkIn: window.checkIn,
+          checkOut: window.checkOut,
+          rooms: 1,
+          adults: 2,
+          children: 0,
+        })
+        .expect(400);
+
+      await request(server())
+        .post(`${API}/bookings`)
+        .set('Authorization', `Bearer ${customer.token}`)
+        .send({
+          quoteId: 'not-a-uuid',
+          contactEmail: 'guest@voyago.test',
+          contactPhone: '+91 98200 12345',
+          guests: [{ firstName: 'Lead', lastName: 'Guest', isLeadGuest: true }],
+          acceptedCancellationPolicy: true,
+        })
+        .expect(400);
+    });
   });
 
   describe('booking creation', () => {

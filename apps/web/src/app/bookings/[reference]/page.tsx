@@ -92,9 +92,11 @@ export default async function BookingDetailPage({
         </div>
 
         <div className="flex flex-wrap gap-2 vg-no-print">
-          <ButtonLink href={`/bookings/${booking.reference}/voucher`} variant="secondary">
-            View voucher
-          </ButtonLink>
+          {['CONFIRMED', 'CANCELLATION_REQUESTED'].includes(booking.status) ? (
+            <ButtonLink href={`/bookings/${booking.reference}/voucher`} variant="secondary">
+              View voucher
+            </ButtonLink>
+          ) : null}
           {canPay ? (
             <ButtonLink href={`/checkout/payment/${booking.reference}`}>
               {booking.status === 'PAYMENT_FAILED' ? 'Retry payment' : 'Complete payment'}

@@ -54,7 +54,7 @@ export function SiteFooter() {
                   <li key={`${column.title}-${link.label}`}>
                     <Link
                       href={link.href}
-                      className="text-sm text-ink-faint transition hover:text-white"
+                      className="inline-block py-1 text-sm text-ink-faint transition hover:text-white"
                     >
                       {link.label}
                     </Link>

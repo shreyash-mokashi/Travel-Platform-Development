@@ -40,6 +40,23 @@ export default async function VoucherPage({ params }: { params: Promise<{ refere
     );
   }
 
+  // A voucher is the document the guest shows at check-in. It only exists for
+  // a stay that is actually paid for and held - never for unpaid, failed or
+  // cancelled bookings.
+  const VOUCHER_STATUSES = ['CONFIRMED', 'CANCELLATION_REQUESTED'];
+  if (!VOUCHER_STATUSES.includes(booking.status)) {
+    return (
+      <div className="vg-container py-12">
+        <EmptyState
+          title="Voucher not available yet"
+          description="A voucher is issued once the booking is confirmed. Complete the demo payment to receive one."
+          icon="🧾"
+          action={<ButtonLink href={`/bookings/${booking.reference}`}>Back to booking</ButtonLink>}
+        />
+      </div>
+    );
+  }
+
   const lead = booking.guests.find((guest) => guest.isLeadGuest) ?? booking.guests[0];
 
   return (

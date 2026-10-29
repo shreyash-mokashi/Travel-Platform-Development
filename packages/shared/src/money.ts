@@ -41,10 +41,14 @@ export function sumMinor(...amounts: number[]): number {
 }
 
 export function formatMoney(minor: number, currency: CurrencyCode = DEMO_CURRENCY): string {
+  // Whole amounts stay clean ("₹8,133"); fractional amounts always carry two
+  // digits ("₹16,194.50"). A floating 0-2 range lets Intl print "₹16,194.5",
+  // which no real travel site would show.
+  const fractionDigits = minor % MINOR_UNITS_PER_MAJOR[currency] === 0 ? 0 : 2;
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(toMajorUnits(minor, currency));
 }
