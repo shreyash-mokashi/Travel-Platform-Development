@@ -5,7 +5,7 @@
   "buildCommand": "pnpm --filter @voyago/shared build && pnpm --filter @voyago/api exec prisma generate && pnpm --filter @voyago/api build",
   "outputDirectory": "public",
   "functions": {
-    "api/[[...path]].js": {
+    "api/[...path].js": {
       "maxDuration": 60,
       "includeFiles": "dist/**"
     }
