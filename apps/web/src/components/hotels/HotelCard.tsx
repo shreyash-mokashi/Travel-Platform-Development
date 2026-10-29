@@ -40,7 +40,7 @@ export function HotelCard({
               className="object-cover transition duration-500 group-hover:scale-[1.03]"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-sand-200 text-sm text-ink-faint">
+            <div className="flex h-full w-full items-center justify-center bg-sand-200 text-sm text-ink-muted">
               No image available
             </div>
           )}
@@ -60,11 +60,11 @@ export function HotelCard({
               </span>
             </div>
 
-            <h3 className="mt-1.5 font-display text-lg font-semibold leading-snug text-ink">
+            <h2 className="mt-1.5 font-display text-lg font-semibold leading-snug text-ink">
               <Link href={href} className="transition hover:text-brand-700">
                 {hotel.name}
               </Link>
-            </h3>
+            </h2>
 
             <div className="mt-2">
               <GuestScore value={hotel.guestRating} reviewCount={hotel.reviewCount} />
@@ -106,7 +106,7 @@ export function HotelCard({
                     <Price minor={hotel.leadPricePerNightMinor} suffix="per night" />
                   </p>
                 ) : null}
-                <p className="mt-0.5 text-[11px] text-ink-faint">Incl. taxes &amp; fees</p>
+                <p className="mt-0.5 text-[11px] text-ink-muted">Incl. taxes &amp; fees</p>
               </div>
             ) : (
               <p className="text-sm text-ink-muted">No rooms for these dates</p>

@@ -174,7 +174,7 @@ export function SearchFilters({
                   data-testid={`filter-star-${entry.value}`}
                 />
                 <span className="flex-1 text-ink-soft">{entry.value} star</span>
-                <span aria-hidden="true" className="text-xs text-ink-faint">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-muted">{entry.count}</span>
                 <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
@@ -200,7 +200,7 @@ export function SearchFilters({
             data-testid="filter-free-cancellation"
           />
           <span className="flex-1 text-ink-soft">Free cancellation available</span>
-          <span aria-hidden="true" className="text-xs text-ink-faint">
+          <span aria-hidden="true" className="text-xs text-ink-muted">
             {facets.freeCancellationCount}
           </span>
           <span className="sr-only">{facets.freeCancellationCount} properties</span>
@@ -225,7 +225,7 @@ export function SearchFilters({
                 <span className="flex-1 text-ink-soft">
                   {MEAL_PLAN_LABEL[entry.value as MealPlan]}
                 </span>
-                <span aria-hidden="true" className="text-xs text-ink-faint">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-muted">{entry.count}</span>
                 <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
@@ -249,7 +249,7 @@ export function SearchFilters({
                   data-testid={`filter-amenity-${entry.code}`}
                 />
                 <span className="flex-1 text-ink-soft">{entry.label}</span>
-                <span aria-hidden="true" className="text-xs text-ink-faint">{entry.count}</span>
+                <span aria-hidden="true" className="text-xs text-ink-muted">{entry.count}</span>
                 <span className="sr-only">{entry.count} properties</span>
               </label>
             ))}
@@ -281,7 +281,7 @@ export function SearchFilters({
       <aside className="sticky top-20 hidden self-start lg:block" data-testid="filters-desktop">
         <div className="vg-card p-5">
           {panel}
-          <p className="mt-6 border-t border-sand-200 pt-3 text-xs text-ink-faint">
+          <p className="mt-6 border-t border-sand-200 pt-3 text-xs text-ink-muted">
             {resultCount} propert{resultCount === 1 ? 'y' : 'ies'} match your filters.
           </p>
         </div>

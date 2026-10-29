@@ -165,7 +165,7 @@ export function RegisterForm({ returnTo }: { returnTo: string }) {
             className="vg-input mt-1.5"
             data-testid="register-password"
           />
-          <p id="password-hint" className="mt-1 text-xs text-ink-faint">
+          <p id="password-hint" className="mt-1 text-xs text-ink-muted">
             At least 10 characters, with a letter and a number.
           </p>
         </div>

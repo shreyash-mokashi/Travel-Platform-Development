@@ -51,17 +51,17 @@ export default async function CheckoutPage({ params }: { params: Promise<{ quote
     <div className="vg-container py-8">
       <nav aria-label="Checkout progress" className="mb-6">
         <ol className="flex flex-wrap items-center gap-2 text-sm">
-          <li className="font-semibold text-ink-faint">1. Choose a room</li>
-          <li aria-hidden className="text-ink-faint">
+          <li className="font-semibold text-ink-muted">1. Choose a room</li>
+          <li aria-hidden className="text-ink-muted">
             →
           </li>
           <li aria-current="step" className="font-semibold text-brand-700">
             2. Guest details
           </li>
-          <li aria-hidden className="text-ink-faint">
+          <li aria-hidden className="text-ink-muted">
             →
           </li>
-          <li className="text-ink-faint">3. Demo payment</li>
+          <li className="text-ink-muted">3. Demo payment</li>
         </ol>
       </nav>
 

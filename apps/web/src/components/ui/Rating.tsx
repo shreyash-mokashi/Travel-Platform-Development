@@ -3,6 +3,7 @@ import { cn } from './cn';
 export function StarRating({ value, className }: { value: number; className?: string }) {
   return (
     <span
+      role="img"
       className={cn('inline-flex items-center gap-0.5 text-amber-400', className)}
       aria-label={`${value} star property`}
     >

@@ -12,7 +12,8 @@ const config: Config = {
         ink: {
           DEFAULT: '#0A2540',
           soft: '#334E68',
-          muted: '#627D98',
+          // 5.1:1 on white, 4.9:1 on the warm page background (WCAG AA needs 4.5).
+          muted: '#56708C',
           faint: '#9FB3C8',
         },
         brand: {

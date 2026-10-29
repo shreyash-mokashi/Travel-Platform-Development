@@ -62,7 +62,7 @@ export function ProfileForm({ user }: { user: AuthUser }) {
       <div>
         <span className="vg-label">Email address</span>
         <input value={user.email} disabled className="vg-input mt-1.5" aria-label="Email address" />
-        <p className="mt-1 text-xs text-ink-faint">
+        <p className="mt-1 text-xs text-ink-muted">
           The email on your account cannot be changed in this demo.
         </p>
       </div>

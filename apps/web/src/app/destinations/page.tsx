@@ -53,7 +53,7 @@ export default async function DestinationsPage() {
                 <span className="font-display text-xl font-bold text-ink transition group-hover:text-brand-700">
                   {destination.city}
                 </span>
-                <span className="mt-0.5 text-xs uppercase tracking-wide text-ink-faint">
+                <span className="mt-0.5 text-xs uppercase tracking-wide text-ink-muted">
                   {destination.state}, {destination.country}
                 </span>
                 <span className="mt-3 block text-sm leading-relaxed text-ink-soft">

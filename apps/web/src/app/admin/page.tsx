@@ -45,7 +45,7 @@ function Metric({
       >
         {value}
       </p>
-      {hint ? <p className="mt-0.5 text-xs text-ink-faint">{hint}</p> : null}
+      {hint ? <p className="mt-0.5 text-xs text-ink-muted">{hint}</p> : null}
     </div>
   );
 }

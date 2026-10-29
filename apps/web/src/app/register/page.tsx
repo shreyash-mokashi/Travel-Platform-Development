@@ -34,7 +34,7 @@ export default async function RegisterPage({
           <RegisterForm returnTo={safeReturnTo} />
         </div>
 
-        <p className="mt-4 text-center text-xs text-ink-faint">
+        <p className="mt-4 text-center text-xs text-ink-muted">
           Voyago is a portfolio project. Please use a throwaway email address — do not enter real
           personal data.
         </p>

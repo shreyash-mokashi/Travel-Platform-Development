@@ -135,7 +135,7 @@ export function DestinationAutocomplete({
                   <span className="text-ink-muted">, {destination.state}</span>
                 </span>
                 {destination.hotelCount !== undefined ? (
-                  <span className="shrink-0 text-xs text-ink-faint">
+                  <span className="shrink-0 text-xs text-ink-muted">
                     {destination.hotelCount} hotels
                   </span>
                 ) : null}

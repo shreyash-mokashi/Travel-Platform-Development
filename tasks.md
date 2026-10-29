@@ -3,7 +3,7 @@
 A task is ticked only when its acceptance criteria were **verified by running it**. Anything
 not verified is listed as outstanding at the bottom, not ticked.
 
-Last verified: 28 October 2026.
+Last verified: 29 October 2026.
 
 ---
 
@@ -124,14 +124,31 @@ Last verified: 28 October 2026.
 
 ---
 
+## Phase J — Deployment (29 October 2026)
+
+- [x] Pushed to GitHub; CI green including Playwright-in-container e2e
+- [x] API deployed to Vercel serverless (`voyago-api-rose.vercel.app`), health and readiness verified
+- [x] Web deployed to Vercel (`travel-platform-development-orcin.vercel.app`)
+- [x] Neon Postgres migrated and seeded; Atlas M0 seeded; both verified by row counts
+- [x] CORS locked to the exact frontend origin and verified (foreign origins get no allow-origin)
+- [x] A full booking journey executed against production: search → quote → login → guest
+      details → demo payment → confirmed → cancelled with policy-correct zero refund
+
+## Phase K — QA hardening (29 October 2026)
+
+- [x] 80-case adversarial API audit harness (`scripts/qa-api-audit.mjs`), all passing
+- [x] Fixed: admin hotel PATCH validated (runtime `Partial<>` erasure), malformed-UUID 500s,
+      voucher gating, money formatting, filter/select accessibility, contrast token,
+      heading order, favicon — full details in `docs/qa-audit.md`
+- [x] Loading skeletons for the dynamic routes that can safely stream (self-revalidating
+      action segments excluded - see D9 in `docs/qa-audit.md`)
+- [x] Full regression at head: 38 + 31 unit, 59 integration, 40 Playwright, 80 harness
+
 ## Outstanding, and why
 
 | Item                                | Status                                   | Blocker                                                                               |
 | ----------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| Push to GitHub                      | Commits prepared locally                 | Pushing is an outward-facing action; needs explicit approval                          |
-| Public deployment                   | Fully documented in `docs/deployment.md` | No hosting account, no billing approval, no external credentials                      |
 | Scheduled expiry of unpaid bookings | Not built                                | Enforced on the next payment attempt instead; a cron job is a small isolated addition |
-| CI workflow run                     | Not executed                             | Runs on the first push to GitHub                                                      |
 
 ## Deliberately out of scope
 

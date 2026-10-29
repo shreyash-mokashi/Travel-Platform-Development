@@ -128,7 +128,7 @@ export default async function AdminBookingsPage({
                   </td>
                   <td className="px-4 py-3">
                     <span className="block text-ink-soft">{booking.hotel.name}</span>
-                    <span className="block text-xs text-ink-faint">{booking.hotel.city}</span>
+                    <span className="block text-xs text-ink-muted">{booking.hotel.city}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-ink-muted">
                     {formatDisplayDate(booking.checkIn)} –<br />

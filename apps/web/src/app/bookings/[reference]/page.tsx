@@ -35,10 +35,10 @@ export default async function BookingDetailPage({
   searchParams,
 }: {
   params: Promise<{ reference: string }>;
-  searchParams: Promise<{ justPaid?: string }>;
+  searchParams: Promise<{ justPaid?: string; cancelled?: string; cancelError?: string }>;
 }) {
   const { reference } = await params;
-  const { justPaid } = await searchParams;
+  const { justPaid, cancelled, cancelError } = await searchParams;
 
   const user = await getCurrentUser();
   if (!user) redirect(loginPathFor(`/bookings/${reference}`));
@@ -66,6 +66,19 @@ export default async function BookingDetailPage({
         <Alert tone="success" title="Your booking is confirmed" className="mb-6">
           A confirmation has been generated for reference <strong>{booking.reference}</strong>. This
           is a demo booking — the property has not been contacted and no money was charged.
+        </Alert>
+      ) : null}
+
+      {cancelError ? (
+        <Alert tone="error" title="The booking could not be cancelled" className="mb-6">
+          {cancelError}
+        </Alert>
+      ) : null}
+
+      {cancelled === '1' && booking.status === 'CANCELLED' ? (
+        <Alert tone="success" title="Your cancellation has been processed" className="mb-6">
+          Booking <strong>{booking.reference}</strong> is cancelled. The refund decision below
+          follows the rate&apos;s cancellation policy — simulated, as no real money ever moved.
         </Alert>
       ) : null}
 
@@ -181,7 +194,7 @@ export default async function BookingDetailPage({
                 <li key={`${guest.firstName}-${index}`}>
                   {guest.firstName} {guest.lastName}
                   {guest.isLeadGuest ? (
-                    <span className="ml-2 text-xs text-ink-faint">Lead guest</span>
+                    <span className="ml-2 text-xs text-ink-muted">Lead guest</span>
                   ) : null}
                 </li>
               ))}
@@ -292,7 +305,7 @@ export default async function BookingDetailPage({
                 </span>
               </div>
             ) : null}
-            <p className="mt-3 text-xs text-ink-faint">
+            <p className="mt-3 text-xs text-ink-muted">
               This is a demo booking. No money was charged and no refund is actually issued.
             </p>
           </div>
@@ -317,7 +330,7 @@ export default async function BookingDetailPage({
             </div>
           ) : null}
 
-          <p className="text-center text-xs text-ink-faint">
+          <p className="text-center text-xs text-ink-muted">
             <Link href="/bookings" className="font-semibold text-brand-700 hover:underline">
               ← All my bookings
             </Link>

@@ -180,7 +180,7 @@ export default async function HomePage() {
                       className="object-cover transition duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <span className="flex h-full items-center justify-center bg-sand-200 text-sm text-ink-faint">
+                    <span className="flex h-full items-center justify-center bg-sand-200 text-sm text-ink-muted">
                       No image
                     </span>
                   )}

@@ -93,7 +93,7 @@ export function InventoryEditor({
         <Button type="submit" size="sm" disabled={pending}>
           {pending ? 'Updating…' : 'Apply to date range'}
         </Button>
-        <p className="text-xs text-ink-faint">
+        <p className="text-xs text-ink-muted">
           Leave a value blank to leave it unchanged. Every change is written to the admin audit log.
         </p>
       </form>

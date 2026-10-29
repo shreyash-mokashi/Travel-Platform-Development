@@ -33,7 +33,7 @@ export function Pagination({
 
       {pages.map((entry, index) =>
         entry === null ? (
-          <span key={`gap-${index}`} className="px-2 text-ink-faint">
+          <span key={`gap-${index}`} className="px-2 text-ink-muted">
             …
           </span>
         ) : (
@@ -83,7 +83,7 @@ function PageLink({
       <span
         aria-disabled
         aria-label={label}
-        className="min-w-9 rounded-lg border border-sand-200 px-3 py-2 text-center text-sm text-ink-faint"
+        className="min-w-9 rounded-lg border border-sand-200 px-3 py-2 text-center text-sm text-ink-muted"
       >
         {children}
       </span>

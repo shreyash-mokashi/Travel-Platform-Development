@@ -11,6 +11,7 @@ import {
   type HotelSummary,
   type MealPlan,
   type RoomOffer,
+  roundToMajorUnit,
 } from '@voyago/shared';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -127,7 +128,7 @@ export class HotelsService {
       ...summary,
       leadPriceMinor: leadOffer ? leadOffer.price.totalMinor : null,
       leadPricePerNightMinor: leadOffer
-        ? Math.round(leadOffer.price.totalMinor / Math.max(1, nights))
+        ? roundToMajorUnit(leadOffer.price.totalMinor / Math.max(1, nights))
         : null,
       description: hotel.description,
       checkInTime: hotel.checkInTime,
@@ -183,7 +184,7 @@ export class HotelsService {
       shortDescription: hotel.shortDescription,
       leadPriceMinor: hasLead ? leadOffer.price.totalMinor : null,
       leadPricePerNightMinor: hasLead
-        ? Math.round(leadOffer.price.totalMinor / Math.max(1, nights))
+        ? roundToMajorUnit(leadOffer.price.totalMinor / Math.max(1, nights))
         : null,
       freeCancellationAvailable: offers.some(
         (offer) => offer.ratePlan.cancellationPolicy.refundable,

@@ -26,7 +26,7 @@ function Field({
         {label}
       </label>
       <div className="mt-1.5">{children}</div>
-      {hint && !error ? <p className="mt-1 text-xs text-ink-faint">{hint}</p> : null}
+      {hint && !error ? <p className="mt-1 text-xs text-ink-muted">{hint}</p> : null}
       {error ? (
         <p className="mt-1 text-xs font-medium text-coral-700" role="alert">
           {error}
@@ -204,7 +204,7 @@ export function CheckoutForm({
       >
         {pending ? 'Creating your booking…' : 'Review and continue to payment'}
       </Button>
-      <p className="text-center text-xs text-ink-faint">
+      <p className="text-center text-xs text-ink-muted">
         Your booking is held while you pay. No money is charged at any point — payments on Voyago
         are simulated.
       </p>

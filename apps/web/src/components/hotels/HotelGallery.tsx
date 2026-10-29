@@ -10,7 +10,7 @@ export function HotelGallery({ images, hotelName }: { images: HotelImage[]; hote
 
   if (images.length === 0) {
     return (
-      <div className="flex h-72 items-center justify-center rounded-2xl bg-sand-200 text-sm text-ink-faint">
+      <div className="flex h-72 items-center justify-center rounded-2xl bg-sand-200 text-sm text-ink-muted">
         No images available for this demo property
       </div>
     );

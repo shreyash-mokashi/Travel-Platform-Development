@@ -23,7 +23,7 @@ export function BookingTimeline({ events }: { events: BookingStatusEventView[] }
             {event.note ? (
               <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">{event.note}</p>
             ) : null}
-            <p className="mt-0.5 text-xs text-ink-faint">
+            <p className="mt-0.5 text-xs text-ink-muted">
               {new Date(event.createdAt).toLocaleString('en-IN', {
                 dateStyle: 'medium',
                 timeStyle: 'short',

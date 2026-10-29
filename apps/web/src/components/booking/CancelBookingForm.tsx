@@ -1,10 +1,7 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import { formatMoney } from '@voyago/shared';
-import { cancelBookingAction } from '@/lib/actions';
-import { emptyActionState } from '@/lib/action-state';
-import { Alert } from '../ui/Alert';
 import { Button } from '../ui/Button';
 
 export function CancelBookingForm({
@@ -14,16 +11,8 @@ export function CancelBookingForm({
   reference: string;
   preview: { refundMinor: number; penaltyMinor: number; reason: string } | null;
 }) {
-  const [state, formAction, pending] = useActionState(cancelBookingAction, emptyActionState);
   const [confirming, setConfirming] = useState(false);
-
-  if (state.ok) {
-    return (
-      <Alert tone="success" title="Cancellation processed">
-        {state.message} The refund outcome is shown in your booking details above.
-      </Alert>
-    );
-  }
+  const [pending, setPending] = useState(false);
 
   return (
     <div className="vg-card p-5" data-testid="cancel-booking">
@@ -52,12 +41,6 @@ export function CancelBookingForm({
         </div>
       ) : null}
 
-      {state.message ? (
-        <Alert tone="error" className="mt-3">
-          {state.message}
-        </Alert>
-      ) : null}
-
       {!confirming ? (
         <Button
           variant="danger"
@@ -69,8 +52,14 @@ export function CancelBookingForm({
           Request cancellation
         </Button>
       ) : (
-        <form action={formAction} className="mt-4 space-y-3">
-          <input type="hidden" name="reference" value={reference} />
+        <form
+          // A plain POST to a route handler on purpose - see the handler's
+          // comment for the server-action race this avoids.
+          method="post"
+          action={`/bookings/${reference}/cancel`}
+          onSubmit={() => setPending(true)}
+          className="mt-4 space-y-3"
+        >
           <div>
             <label htmlFor="cancel-reason" className="vg-label">
               Reason (optional)
@@ -99,7 +88,7 @@ export function CancelBookingForm({
               Keep booking
             </Button>
           </div>
-          <p className="text-xs text-ink-faint">
+          <p className="text-xs text-ink-muted">
             Cancellation cannot be undone. Refunds are simulated — no money moves.
           </p>
         </form>

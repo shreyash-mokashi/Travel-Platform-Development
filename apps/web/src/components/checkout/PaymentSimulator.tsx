@@ -123,7 +123,7 @@ export function PaymentSimulator({
         </Button>
       </form>
 
-      <p className="mt-3 text-center text-xs text-ink-faint">
+      <p className="mt-3 text-center text-xs text-ink-muted">
         Submitting twice is safe — each attempt carries an idempotency key, so a duplicate request
         returns the original result instead of charging again.
       </p>

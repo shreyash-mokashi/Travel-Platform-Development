@@ -45,12 +45,12 @@ export default async function PaymentPage({ params }: { params: Promise<{ refere
     <div className="vg-container py-8">
       <nav aria-label="Checkout progress" className="mb-6">
         <ol className="flex flex-wrap items-center gap-2 text-sm">
-          <li className="font-semibold text-ink-faint">1. Choose a room</li>
-          <li aria-hidden className="text-ink-faint">
+          <li className="font-semibold text-ink-muted">1. Choose a room</li>
+          <li aria-hidden className="text-ink-muted">
             →
           </li>
-          <li className="font-semibold text-ink-faint">2. Guest details</li>
-          <li aria-hidden className="text-ink-faint">
+          <li className="font-semibold text-ink-muted">2. Guest details</li>
+          <li aria-hidden className="text-ink-muted">
             →
           </li>
           <li aria-current="step" className="font-semibold text-brand-700">
@@ -84,7 +84,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ refere
                 <li key={`${guest.firstName}-${index}`}>
                   {guest.firstName} {guest.lastName}
                   {guest.isLeadGuest ? (
-                    <span className="ml-2 text-xs text-ink-faint">Lead guest</span>
+                    <span className="ml-2 text-xs text-ink-muted">Lead guest</span>
                   ) : null}
                 </li>
               ))}

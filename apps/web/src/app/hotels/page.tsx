@@ -189,7 +189,7 @@ async function Results({ search }: { search: ReturnType<typeof parseSearchParams
                 />
               ))}
               <Pagination page={data.page} totalPages={data.totalPages} buildHref={hrefForPage} />
-              <p className="pt-2 text-center text-xs text-ink-faint">
+              <p className="pt-2 text-center text-xs text-ink-muted">
                 Showing page {data.page} of {data.totalPages}.{' '}
                 <Link href="/destinations" className="font-semibold text-brand-700 hover:underline">
                   Browse other destinations

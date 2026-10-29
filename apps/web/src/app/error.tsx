@@ -24,7 +24,7 @@ export default function GlobalError({
       <p className="max-w-md text-sm text-ink-muted">
         We could not load this page. This is usually temporary — try again, or go back to search.
       </p>
-      {error.digest ? <p className="text-xs text-ink-faint">Reference: {error.digest}</p> : null}
+      {error.digest ? <p className="text-xs text-ink-muted">Reference: {error.digest}</p> : null}
       <div className="mt-2 flex gap-3">
         <Button onClick={reset}>Try again</Button>
         <ButtonLink href="/" variant="secondary">

@@ -65,7 +65,7 @@ export default async function BookingsPage({
                         className="object-cover"
                       />
                     ) : (
-                      <span className="flex h-full items-center justify-center bg-sand-200 text-xs text-ink-faint">
+                      <span className="flex h-full items-center justify-center bg-sand-200 text-xs text-ink-muted">
                         No image
                       </span>
                     )}

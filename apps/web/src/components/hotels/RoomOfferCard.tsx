@@ -87,7 +87,7 @@ export function RoomOfferCard({
         <div className="shrink-0 border-t border-sand-200 pt-4 lg:w-60 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
           <div className="text-right">
             {offer.price.discountMinor > 0 ? (
-              <p className="text-xs text-ink-faint line-through">
+              <p className="text-xs text-ink-muted line-through">
                 {formatMoney(offer.price.baseAmountMinor)}
               </p>
             ) : null}
@@ -98,7 +98,7 @@ export function RoomOfferCard({
               for {stay.nights} night{stay.nights > 1 ? 's' : ''}, {stay.rooms} room
               {stay.rooms > 1 ? 's' : ''}
             </p>
-            <p className="text-xs text-ink-faint">
+            <p className="text-xs text-ink-muted">
               <Price minor={perNight} suffix="per night, incl. taxes" />
             </p>
           </div>
@@ -140,7 +140,7 @@ export function RoomOfferCard({
               {pending ? 'Checking price…' : 'Select room'}
             </Button>
           </form>
-          <p className="mt-2 text-center text-[11px] text-ink-faint">
+          <p className="mt-2 text-center text-[11px] text-ink-muted">
             We re-check the price before you pay.
           </p>
         </div>

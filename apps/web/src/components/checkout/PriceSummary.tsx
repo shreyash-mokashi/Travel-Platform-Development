@@ -103,7 +103,7 @@ export function PriceSummary({
             {formatMoney(price.totalMinor)}
           </span>
         </div>
-        <p className="mt-1 text-right text-xs text-ink-faint">Includes all taxes and fees</p>
+        <p className="mt-1 text-right text-xs text-ink-muted">Includes all taxes and fees</p>
       </div>
     </div>
   );

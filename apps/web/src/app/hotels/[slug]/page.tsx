@@ -224,7 +224,7 @@ export default async function HotelDetailPage({ params, searchParams }: PageProp
                   ))}
                 </div>
               ) : null}
-              <p className="mt-3 text-xs text-ink-faint">
+              <p className="mt-3 text-xs text-ink-muted">
                 Destination guide content is stored in MongoDB and maintained separately from
                 booking records.
               </p>
@@ -256,7 +256,7 @@ export default async function HotelDetailPage({ params, searchParams }: PageProp
             <ul className="mt-3 space-y-2">
               {hotel.policies.map((policy) => (
                 <li key={policy} className="flex gap-2 text-xs leading-relaxed text-ink-soft">
-                  <span className="text-ink-faint" aria-hidden>
+                  <span className="text-ink-muted" aria-hidden>
                     •
                   </span>
                   {policy}
@@ -270,7 +270,7 @@ export default async function HotelDetailPage({ params, searchParams }: PageProp
             <p className="mt-2 text-sm text-ink-soft">
               {hotel.locality}, {hotel.destination.city}
             </p>
-            <p className="mt-1 text-xs text-ink-faint">
+            <p className="mt-1 text-xs text-ink-muted">
               {hotel.latitude.toFixed(4)}, {hotel.longitude.toFixed(4)}
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">

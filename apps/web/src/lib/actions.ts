@@ -210,20 +210,3 @@ export async function resolvePendingPaymentAction(
   redirect(`/bookings/${reference}`);
 }
 
-export async function cancelBookingAction(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const reference = String(formData.get('reference') ?? '');
-  const reason = String(formData.get('reason') ?? '').trim() || undefined;
-
-  try {
-    await apiFetch(`/bookings/${reference}/cancellation`, { method: 'POST', body: { reason } });
-  } catch (error) {
-    return { ok: false, message: toUserMessage(error, 'The booking could not be cancelled.') };
-  }
-
-  revalidatePath(`/bookings/${reference}`);
-  revalidatePath('/bookings');
-  return { ok: true, message: 'Your cancellation has been processed.' };
-}
