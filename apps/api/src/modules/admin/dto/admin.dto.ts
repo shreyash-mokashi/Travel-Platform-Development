@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional , PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -200,3 +200,10 @@ export class AdminAuditQueryDto {
   @Max(100)
   pageSize = 25;
 }
+
+/**
+ * PATCH body for a hotel. PartialType keeps every validator from
+ * UpsertHotelDto while making the fields optional - a bare TypeScript
+ * Partial<> is erased at runtime and validates nothing.
+ */
+export class UpdateHotelDto extends PartialType(UpsertHotelDto) {}

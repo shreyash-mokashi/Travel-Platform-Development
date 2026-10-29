@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, type RequestUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -24,7 +24,7 @@ export class QuotesController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Re-read and reprice an existing quote' })
-  get(@Param('id') id: string, @CurrentUser() user?: RequestUser) {
+  get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @CurrentUser() user?: RequestUser) {
     return this.quotes.get(id, user?.id);
   }
 }

@@ -13,6 +13,7 @@ import {
   Matches,
   MaxLength,
   ValidateNested,
+  IsUUID,
 } from 'class-validator';
 import { BOOKING_STATUS, SEARCH_LIMITS, type BookingStatus } from '@voyago/shared';
 
@@ -39,8 +40,7 @@ export class GuestDto {
 
 export class CreateBookingDto {
   @ApiProperty({ description: 'Quote issued by POST /quotes. Prices come from here only.' })
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID()
   quoteId: string;
 
   @ApiProperty({ example: 'traveller@example.com' })

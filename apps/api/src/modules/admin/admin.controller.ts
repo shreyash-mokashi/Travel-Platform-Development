@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, type RequestUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -9,7 +9,7 @@ import {
   UpdateInventoryDto,
   UpdateRatePlanDto,
   UpdateRoomDto,
-  UpsertHotelDto,
+  UpdateHotelDto,
 } from './dto/admin.dto';
 
 @ApiTags('Admin')
@@ -45,15 +45,15 @@ export class AdminController {
 
   @Get('hotels/:id/inventory')
   @ApiOperation({ summary: 'Rooms, rate plans and nightly inventory for a hotel' })
-  getHotelInventory(@Param('id') id: string) {
+  getHotelInventory(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.admin.getHotelInventory(id);
   }
 
   @Patch('hotels/:id')
   @ApiOperation({ summary: 'Update hotel details' })
   updateHotel(
-    @Param('id') id: string,
-    @Body() dto: Partial<UpsertHotelDto>,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: UpdateHotelDto,
     @CurrentUser() user: RequestUser,
   ) {
     return this.admin.updateHotel(id, dto, user.id);
@@ -62,7 +62,7 @@ export class AdminController {
   @Patch('rooms/:id')
   @ApiOperation({ summary: 'Update a room type' })
   updateRoom(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateRoomDto,
     @CurrentUser() user: RequestUser,
   ) {
@@ -72,7 +72,7 @@ export class AdminController {
   @Patch('rate-plans/:id')
   @ApiOperation({ summary: 'Update a rate plan' })
   updateRatePlan(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateRatePlanDto,
     @CurrentUser() user: RequestUser,
   ) {
@@ -82,7 +82,7 @@ export class AdminController {
   @Patch('rooms/:id/inventory')
   @ApiOperation({ summary: 'Bulk update availability and nightly tariff' })
   updateInventory(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateInventoryDto,
     @CurrentUser() user: RequestUser,
   ) {

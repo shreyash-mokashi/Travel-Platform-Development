@@ -117,6 +117,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
           error: 'Bad Request',
           message: 'A referenced record does not exist.',
         };
+      case 'P2023':
+        // Malformed identifier (e.g. a non-UUID where a UUID column is
+        // queried). Client input problem, never a server fault.
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Bad Request',
+          message: 'The identifier supplied is not valid.',
+        };
       default:
         return {
           status: HttpStatus.INTERNAL_SERVER_ERROR,

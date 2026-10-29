@@ -15,6 +15,7 @@ import {
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
+  IsUUID,
 } from 'class-validator';
 import {
   AMENITY_CODES,
@@ -194,18 +195,15 @@ export class HotelOffersQueryDto extends StayQueryDto {}
 
 export class CreateQuoteDto extends StayQueryDto {
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID()
   hotelId: string;
 
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID()
   roomId: string;
 
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID()
   ratePlanId: string;
 
   @ApiPropertyOptional({

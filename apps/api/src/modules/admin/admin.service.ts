@@ -11,7 +11,7 @@ import type {
   UpdateInventoryDto,
   UpdateRatePlanDto,
   UpdateRoomDto,
-  UpsertHotelDto,
+  UpdateHotelDto,
 } from './dto/admin.dto';
 
 /** Every figure returned here is computed from the database, never hardcoded. */
@@ -208,7 +208,7 @@ export class AdminService {
     };
   }
 
-  async updateHotel(hotelId: string, dto: Partial<UpsertHotelDto>, actorUserId: string) {
+  async updateHotel(hotelId: string, dto: UpdateHotelDto, actorUserId: string) {
     const hotel = await this.prisma.hotel.update({
       where: { id: hotelId },
       data: {
