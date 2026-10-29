@@ -1,13 +1,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { AirportView, Destination, HotelSummary } from '@voyago/shared';
+import { FlightSearchUnavailable } from '@/components/flights/FlightSearchUnavailable';
 import { FlightSearchWidget } from '@/components/flights/FlightSearchWidget';
 import { SearchTabs } from '@/components/search/SearchTabs';
 import { SearchWidget } from '@/components/search/SearchWidget';
 import { ButtonLink } from '@/components/ui/Button';
 import { DemoNotice } from '@/components/ui/DemoNotice';
 import { GuestScore, StarRating } from '@/components/ui/Rating';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiFetchOrFallback } from '@/lib/api';
 import { defaultStay } from '@/lib/search-params';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,10 @@ export default async function HomePage() {
   const [destinations, featured, airports] = await Promise.all([
     apiFetch<Destination[]>('/destinations', { auth: false }),
     apiFetch<HotelSummary[]>('/hotels/featured', { auth: false }),
-    apiFetch<AirportView[]>('/flights/airports', { auth: false }),
+    // The flight catalogue decorates one tab of the hero. If it is unavailable
+    // the rest of the home page is still perfectly serviceable, so degrade that
+    // tab instead of failing the whole route.
+    apiFetchOrFallback<AirportView[]>('/flights/airports', [], { auth: false }),
   ]);
 
   const stay = defaultStay();
@@ -74,7 +78,13 @@ export default async function HomePage() {
                   }}
                 />
               }
-              flights={<FlightSearchWidget airports={airports} />}
+              flights={
+                airports.length > 0 ? (
+                  <FlightSearchWidget airports={airports} />
+                ) : (
+                  <FlightSearchUnavailable />
+                )
+              }
             />
             <p className="mt-3 text-xs text-sand-200/80">
               All inventory, pricing and payments on Voyago are simulated. No real bookings are made
@@ -219,11 +229,12 @@ export default async function HomePage() {
         <div className="vg-card flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <h2 className="font-display text-xl font-bold text-ink">
-              Flights, packages and activities are next
+              Hotels and flights are live. Packages and activities are next
             </h2>
             <p className="mt-1.5 max-w-xl text-sm text-ink-muted">
-              Voyago is built as a modular platform. The hotel service is complete end to end; the
-              remaining travel services reuse the same booking, payment and refund core.
+              Voyago is built as a modular platform. Both the hotel and flight services are complete
+              end to end on one shared booking, payment and refund core — which is exactly what the
+              remaining travel services will reuse.
             </p>
           </div>
           <ButtonLink href="/roadmap" variant="secondary">

@@ -162,12 +162,24 @@ Last verified: 29 October 2026.
 
 ## Outstanding, and why
 
-| Item                                | Status    | Blocker                                                                               |
-| ----------------------------------- | --------- | ------------------------------------------------------------------------------------- |
-| Scheduled expiry of unpaid bookings | Not built | Enforced on the next payment attempt instead; a cron job is a small isolated addition |
+| Item                                               | Status      | Blocker                                                                                                                                                                 |
+| -------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scheduled expiry of unpaid bookings                | Not built   | Enforced on the next payment attempt instead; a cron job is a small isolated addition                                                                                   |
+| Flight migration + seed on the production database | Not applied | Needs a privileged command against Neon that I cannot run; see `docs/deployment.md` §3. Until it runs, production serves flights in the degraded state described in D11 |
 
 ## Deliberately out of scope
 
-Flights, holiday packages, activities and car rentals. The hotel service is the first
-functional milestone and defines the patterns the rest will reuse; see `/roadmap` in the app
-and section 17 of `docs/architecture.md`.
+Holiday packages, activities and car rentals. Hotels and flights are both complete end to end
+and together define the patterns the rest will reuse; see `/roadmap` in the app and section 17
+of `docs/architecture.md`.
+
+## Phase M - production incident D11 (resilience)
+
+- [x] `/flights/airports` 500 on production took down the home page via `Promise.all`;
+      `/flights` returned 200 with an empty `<main>` because the shell had already streamed
+- [x] `apiFetchOrFallback()` for panel data; `FlightSearchUnavailable` degradation state on
+      both routes; flights page reports server errors in place instead of rethrowing
+- [x] Footer and home copy corrected - flights were still advertised as "Coming next"
+- [x] 4 unit tests; verified against the live API while it was genuinely returning 500
+- [x] D12: bare `/flights` (the header link) rendered a validation error; the page now defaults
+      the departure date to today + 14, matching the search form

@@ -21,12 +21,12 @@ const COLUMNS = [
     ],
   },
   {
-    title: 'Coming next',
+    title: 'Flights',
     links: [
-      { href: '/flights', label: 'Flights' },
-      { href: '/roadmap', label: 'Holiday packages' },
-      { href: '/roadmap', label: 'Activities' },
-      { href: '/roadmap', label: 'Car rentals' },
+      { href: '/flights', label: 'Search flights' },
+      { href: '/flights?from=BOM&to=GOI', label: 'Mumbai to Goa' },
+      { href: '/flights?from=DEL&to=BOM', label: 'Delhi to Mumbai' },
+      { href: '/roadmap', label: 'What is coming next' },
     ],
   },
 ];

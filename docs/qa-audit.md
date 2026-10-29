@@ -40,11 +40,11 @@ the check; nothing is inferred.
 
   | Suite                                       | Count | Command                                            |
   | ------------------------------------------- | ----- | -------------------------------------------------- |
-  | Shared/API unit (Jest)                      | 38    | `pnpm --filter @voyago/api test`                   |
-  | Web unit (Jest)                             | 31    | `pnpm --filter @voyago/web test`                   |
-  | API integration (Supertest, real DBs)       | 59    | `pnpm --filter @voyago/api test:e2e`               |
-  | Browser e2e (Playwright, desktop + Pixel 7) | 38    | `SEED_DEMO_ADMIN_PASSWORD=... npx playwright test` |
-  | Adversarial API audit                       | 80    | `node scripts/qa-api-audit.mjs`                    |
+  | Shared/API unit (Jest)                      | 46    | `pnpm --filter @voyago/api test`                   |
+  | Web unit (Jest)                             | 35    | `pnpm --filter @voyago/web test`                   |
+  | API integration (Supertest, real DBs)       | 75    | `pnpm --filter @voyago/api test:e2e`               |
+  | Browser e2e (Playwright, desktop + Pixel 7) | 42    | `SEED_DEMO_ADMIN_PASSWORD=... npx playwright test` |
+  | Adversarial API audit                       | 96    | `node scripts/qa-api-audit.mjs`                    |
 
   Five of the seven admin e2e tests skip without `SEED_DEMO_ADMIN_PASSWORD` (the suite cannot know a
   generated password); they were executed with it and pass.
@@ -96,6 +96,48 @@ the check; nothing is inferred.
   which would turn its `notFound()` into an HTTP 200.
 - Footer links padded to meet minimum tap-target size on mobile.
 - Favicon (D8).
+
+### D11 — one unavailable panel took down the whole home page
+
+**Found in production**, after the flight service deployed ahead of its database migration.
+
+`/flights/airports` returned HTTP 500 because the flight tables did not yet exist on the
+production database. The home page loaded that catalogue inside a `Promise.all` alongside
+destinations and featured hotels, so the rejected promise propagated and the entire route
+rendered the error boundary — the hotel half of the site was perfectly healthy and still
+unreachable. `/flights` failed differently and worse: because the layout shell had already
+streamed by the time the fetch threw, the error boundary could not replace it, so the page
+returned **HTTP 200 with an empty `<main>`** — a blank screen that monitoring would score as
+success.
+
+Two distinct defects, one trigger:
+
+1. **Coupling.** Data that decorates one tab of a page was treated as data the page requires.
+   Added `apiFetchOrFallback()` and used it for the airport catalogue on both routes; when it
+   is unavailable the flight tab renders `FlightSearchUnavailable` and everything else is
+   untouched.
+2. **Invisible failure.** The flights page rethrew server-side errors after streaming had
+   begun. It now reports them in place, so a failure is always visible to the visitor.
+
+Verified by running a local production build against the live API while it was genuinely
+returning 500 for `/flights/airports`: `/` returned 200 with destinations and featured hotels
+intact plus the degradation notice, and `/flights` rendered the explanation rather than a blank
+page. Covered by four unit tests in `apps/web/src/lib/__tests__/api-fallback.test.ts`.
+
+**Note on the trigger.** The deploy itself was the ordering mistake — the migration must be
+applied before code that reads the new tables ships. The runbook step exists in
+`docs/deployment.md` §3; resilience work does not replace it.
+
+### D12 — the header's Flights link landed on a validation error
+
+Found while checking the footer links added above. `/flights` with no query string sent an
+empty `date` to the API, which correctly rejected it, so the page every visitor reached from
+the header navigation read "We could not run that search — Request validation failed". The
+search form was usable, but the landing state advertised the feature as broken.
+
+`parseParams` now falls back to the same default departure date the search form offers
+(today + 14 days), so a bare `/flights` lands on real results. This was live in production
+and is unrelated to the migration.
 
 ### D10 — intermittent stuck "Cancelling…" on booking cancellation
 

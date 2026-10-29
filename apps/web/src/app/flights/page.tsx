@@ -1,19 +1,22 @@
 import type { Metadata } from 'next';
 import {
   FLIGHT_SORT_OPTIONS,
+  addDays,
   formatDisplayDate,
+  todayIso,
   type AirportView,
   type FlightSearchResponse,
   type FlightSortOption,
 } from '@voyago/shared';
 import { FlightOfferCard } from '@/components/flights/FlightOfferCard';
+import { FlightSearchUnavailable } from '@/components/flights/FlightSearchUnavailable';
 import { FlightSearchWidget } from '@/components/flights/FlightSearchWidget';
 import { FlightSortSelect } from '@/components/flights/FlightSortSelect';
 import { Alert } from '@/components/ui/Alert';
 import { ButtonLink } from '@/components/ui/Button';
 import { DemoNotice } from '@/components/ui/DemoNotice';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiFetchOrFallback } from '@/lib/api';
 import { ApiError, toUserMessage } from '@/lib/api-error';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +24,9 @@ export const dynamic = 'force-dynamic';
 // Free hosting suspends an idle API, so the first render after a quiet period
 // waits while it wakes. Vercel's default function limit is well under that.
 export const maxDuration = 60;
+
+/** Matches the default departure date offered by the search form. */
+const DEFAULT_DEPARTURE_OFFSET_DAYS = 14;
 
 interface RawFlightParams {
   from?: string;
@@ -38,7 +44,10 @@ function parseParams(raw: RawFlightParams) {
   return {
     from: (raw.from ?? 'BOM').toUpperCase().slice(0, 3),
     to: (raw.to ?? 'GOI').toUpperCase().slice(0, 3),
-    date: raw.date ?? '',
+    // Arriving with no date (the header link, a shared /flights URL) used to
+    // send an empty string to the API and render a validation error. Fall back
+    // to the same date the search form defaults to so the page lands on results.
+    date: raw.date || addDays(todayIso(), DEFAULT_DEPARTURE_OFFSET_DAYS),
     adults: Math.max(1, Number(raw.adults) || 1),
     children: Math.max(0, Number(raw.children) || 0),
     sort,
@@ -64,7 +73,9 @@ export default async function FlightsPage({
 }) {
   const params = parseParams(await searchParams);
 
-  const airports = await apiFetch<AirportView[]>('/flights/airports');
+  // Losing the airport list must not blank the page: the search form degrades
+  // and the error below explains why no results are shown.
+  const airports = await apiFetchOrFallback<AirportView[]>('/flights/airports', []);
 
   let results: FlightSearchResponse | null = null;
   let searchError: string | null = null;
@@ -82,23 +93,31 @@ export default async function FlightsPage({
     if (error instanceof ApiError && error.status < 500) {
       searchError = toUserMessage(error, 'That search is not valid. Adjust it and try again.');
     } else {
-      throw error;
+      // A server-side failure used to throw here. Because the layout shell has
+      // already streamed by this point the error boundary could not replace it,
+      // so the visitor was left with an empty page. Report it in place instead.
+      searchError =
+        'Flight availability could not be loaded right now. Please try again in a moment.';
     }
   }
 
   return (
     <div className="vg-container py-6 sm:py-8">
-      <FlightSearchWidget
-        airports={airports}
-        defaults={{
-          from: params.from,
-          to: params.to,
-          date: params.date || undefined,
-          adults: params.adults,
-          children: params.children,
-        }}
-        compact
-      />
+      {airports.length > 0 ? (
+        <FlightSearchWidget
+          airports={airports}
+          defaults={{
+            from: params.from,
+            to: params.to,
+            date: params.date,
+            adults: params.adults,
+            children: params.children,
+          }}
+          compact
+        />
+      ) : (
+        <FlightSearchUnavailable compact />
+      )}
 
       <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
         <div>

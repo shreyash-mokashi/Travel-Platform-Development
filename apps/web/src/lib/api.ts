@@ -87,3 +87,20 @@ export async function apiFetchOrNull<T>(
     throw error;
   }
 }
+
+/**
+ * Returns `fallback` instead of throwing when the request fails for any reason.
+ * Use it for data that decorates a page rather than defining it, so one
+ * unavailable panel cannot take down an otherwise healthy route.
+ */
+export async function apiFetchOrFallback<T>(
+  path: string,
+  fallback: T,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  try {
+    return await apiFetch<T>(path, options);
+  } catch {
+    return fallback;
+  }
+}

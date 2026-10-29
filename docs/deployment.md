@@ -121,6 +121,12 @@ When a later migration introduces a service, the new tables arrive empty and `db
 wrong tool — it would wipe the bookings people have already made. Migrate, then run the
 service's own additive seeder. For flights:
 
+> **Order matters. Migrate and seed _before_ pushing the code that reads the new tables.**
+> Vercel deploys on push, so a push that lands first puts live code in front of tables that do
+> not exist yet. This happened once: every `/flights/airports` call returned 500 and took the
+> home page down with it (see D11 in `docs/qa-audit.md`). The pages now degrade instead of
+> failing, but the correct sequence is still migrate → seed → push.
+
 ```bash
 DATABASE_URL="<neon direct url>" \
 DIRECT_URL="<neon direct url>" \

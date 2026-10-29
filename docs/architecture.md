@@ -10,10 +10,11 @@ and what the trade-offs are.
 The platform is designed for six travel services: hotels, flights, activities, holiday
 packages, car rentals, and the shared account, payment and admin layer beneath them.
 
-**Only the hotel service is implemented.** It is built as the reference implementation: a
-complete, tested vertical slice that defines the booking, pricing, payment and refund patterns
-the remaining services will reuse. The others are deliberately absent rather than stubbed —
-placeholder pages that do nothing would misrepresent the project's state.
+**The hotel and flight services are implemented.** Hotels came first as the reference
+implementation; flights were then built as a second vertical slice on the same booking,
+pricing, payment and refund core, which is what proved those patterns generalise. The
+remaining services are deliberately absent rather than stubbed — placeholder pages that do
+nothing would misrepresent the project's state.
 
 ---
 
